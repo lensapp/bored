@@ -41,6 +41,7 @@ export class SignalingServer {
   }
 
   stop() {
+    console.log("shutting down");
     this.ws?.close();
   }
 

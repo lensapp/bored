@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "yarn ts-node index.ts",
     "dist": "yarn tsc",
+    "build-image": "docker build -t heliograph:latest .",
     "lint": "yarn run eslint --ext js,ts --max-warnings=0 ."
   },
   "devDependencies": {
