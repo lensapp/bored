@@ -47,7 +47,17 @@ export class TunnelServer {
       return;
     }
 
-    req.socket.pipe(agent.openStream()).pipe(res.socket);
+    const stream = agent.openStream();
+
+    stream.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
+
+    for (let i = 0; i < req.rawHeaders.length; i += 2) {
+      stream.write(`${req.rawHeaders[i]}: ${req.rawHeaders[i+1]}\r\n`);
+    }
+    stream.write("\r\n");
+    stream.write(req.rawHeaders.join("\r\n"));
+
+    req.socket.pipe(stream).pipe(res.socket);
   }
 
   handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
@@ -60,7 +70,7 @@ export class TunnelServer {
     const url = new URL(req.url, "http://localhost");
 
     if (url.pathname === "/lens-agent/connect") {
-      this.ws?.handleUpgrade(req, socket, head, this.handleAgentSocket);
+      this.ws?.handleUpgrade(req, socket, head, this.handleAgentSocket.bind(this));
     }
   }
 
