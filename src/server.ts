@@ -1,91 +1,77 @@
 import WebSocket, { Server } from "ws";
-import { IncomingMessage } from "http";
-import { LensClient } from "./lens-client";
+import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } from "http";
 import { LensAgent } from "./lens-agent";
+import { Socket } from "net";
 import { URL } from "url";
 import { version } from "../package.json";
 
-export class SignalingServer {
+export class TunnelServer {
+  private server?: HttpServer;
   private ws?: Server;
-  private clients: LensClient[] = [];
   private agents: LensAgent[] = [];
 
   start(port = 8080) {
     console.log(`~~ Heliograph v${version} ~~`);
 
     this.ws = new Server({
-      port
+      noServer: true
     });
 
-    this.ws.on("listening", () => {
+    this.server = createServer(this.handleRequest.bind(this));
+    this.server.on("upgrade", this.handleUpgrade.bind(this));
+    this.server.on("listening", () => {
       console.log(`listening on port ${port}`);
     });
 
-    this.ws.on("connection", (socket: WebSocket, request: IncomingMessage) => {
-      if (!request.url || !request.method) {
-        socket.close();
-
-        return;
-      }
-
-      const url = new URL(request.url, "http://localhost");
-
-      if (url.pathname === "/client") {
-        this.handleClientSocket(socket);
-      } else if (url.pathname === "/agent") {
-        this.handleAgentSocket(socket);
-      } else {
-        socket.close();
-      }
-    });
+    this.server.listen(port);
   }
 
   stop() {
     console.log("shutting down");
-    this.ws?.close();
+    this.server?.close();
   }
 
-  public handleClientSocket(socket: WebSocket) {
-    const agent = this.getAgentForClient();
+  handleRequest(req: IncomingMessage, res: ServerResponse) {
+    console.log(`${req.method}: ${req.headers.host}${req.url}`);
+
+    const agent = this.agents[0];
 
     if (!agent) {
-      socket.close();
+      res.writeHead(503);
+      res.end();
 
       return;
     }
 
-    console.log("client connected");
-    const client = new LensClient(socket, agent);
+    if (!res.socket) {
+      return;
+    }
 
-    this.clients.push(client);
-    socket.on("message", (data) => {
-      client.agent.socket.send(data);
-    });
-
-    socket.on("close", () => {
-      const index = this.clients.findIndex((client) => client.socket === socket);
-
-      if (index !== -1) {
-        this.clients.splice(index, 1);
-      }
-    });
+    req.socket.pipe(agent.openStream()).pipe(res.socket);
   }
 
-  public handleAgentSocket(socket: WebSocket) {
+  handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
+    if (!req.url || !req.method) {
+      socket.end();
+
+      return;
+    }
+
+    const url = new URL(req.url, "http://localhost");
+
+    if (url.pathname === "/lens-agent/connect") {
+      this.ws?.handleUpgrade(req, socket, head, this.handleAgentSocket);
+    }
+  }
+
+  handleAgentSocket(socket: WebSocket) {
     console.log("agent connected");
     const agent = new LensAgent(socket);
 
     this.agents.push(agent);
 
-    socket.on("message", (data) => {
-      this.getClientsForAgent(agent).forEach((client) => {
-        client.socket.send(data);
-      });
-    });
-
     socket.on("close", () => {
-      console.log("agent closed");
-      this.getClientsForAgent(agent).forEach((client) => client.socket.close());
+      console.log("agent disconnected");
       const index = this.agents.findIndex((agent) => agent.socket === socket);
 
       if (index !== -1) {
@@ -94,11 +80,7 @@ export class SignalingServer {
     });
   }
 
-  public getClientsForAgent(agent: LensAgent) {
-    return this.clients.filter((client) => client.agent === agent);
-  }
-
-  public getAgentForClient(): LensAgent {
-    return this.agents[Math.floor(Math.random() * this.agents.length)];
+  public getAgent() {
+    return this.agents.shift() || null;
   }
 }

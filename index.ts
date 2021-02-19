@@ -1,6 +1,6 @@
-import { SignalingServer } from "./src/server";
+import { TunnelServer } from "./src/server";
 
-const server = new SignalingServer();
+const server = new TunnelServer();
 
 process.once("SIGTERM", () => {
   server.stop();
@@ -12,4 +12,4 @@ process.once("SIGINT", () => {
   process.exit(0);
 });
 
-server.start(8080);
+server.start(parseInt(process.env.PORT || "8080"));
