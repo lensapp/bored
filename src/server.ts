@@ -32,32 +32,8 @@ export class TunnelServer {
   }
 
   handleRequest(req: IncomingMessage, res: ServerResponse) {
-    console.log(`${req.method}: ${req.headers.host}${req.url}`);
-
-    const agent = this.agents[0];
-
-    if (!agent) {
-      res.writeHead(503);
-      res.end();
-
-      return;
-    }
-
-    if (!res.socket) {
-      return;
-    }
-
-    const stream = agent.openStream();
-
-    stream.write(`${req.method} ${req.url} HTTP/1.1\r\n`);
-
-    for (let i = 0; i < req.rawHeaders.length; i += 2) {
-      stream.write(`${req.rawHeaders[i]}: ${req.rawHeaders[i+1]}\r\n`);
-    }
-    stream.write("\r\n");
-    stream.write(req.rawHeaders.join("\r\n"));
-
-    req.socket.pipe(stream).pipe(res.socket);
+    res.writeHead(404);
+    res.end();
   }
 
   handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
@@ -71,6 +47,8 @@ export class TunnelServer {
 
     if (url.pathname === "/lens-agent/connect") {
       this.ws?.handleUpgrade(req, socket, head, this.handleAgentSocket.bind(this));
+    } else if (url.pathname === "/lens-client/connect") {
+      this.ws?.handleUpgrade(req, socket, head, this.handleClientSocket.bind(this));
     }
   }
 
@@ -90,7 +68,20 @@ export class TunnelServer {
     });
   }
 
-  public getAgent() {
-    return this.agents.shift() || null;
+  handleClientSocket(socket: WebSocket) {
+    console.log("client connected");
+    const agent = this.agents[Math.floor(Math.random() * this.agents.length)];
+
+    if (!agent) {
+      console.log("no agents online, closing client request");
+      socket.close();
+
+      return;
+    }
+
+    const stream = agent.openStream();
+    const duplex = WebSocket.createWebSocketStream(socket);
+
+    duplex.pipe(stream).pipe(duplex);
   }
 }
