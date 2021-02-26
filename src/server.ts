@@ -11,7 +11,7 @@ export class TunnelServer {
   private agents: LensAgent[] = [];
 
   start(port = 8080) {
-    console.log(`~~ Heliograph v${version} ~~`);
+    console.log(`~~ BoreD v${version} ~~`);
 
     this.ws = new Server({
       noServer: true

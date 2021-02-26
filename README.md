@@ -1,4 +1,4 @@
-# Heliograph
+# BoreD
 
 A reverse tunnel server designed for Lens.
 

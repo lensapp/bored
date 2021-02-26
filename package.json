@@ -1,12 +1,12 @@
 {
-  "name": "heliograph",
+  "name": "bored",
   "version": "0.1.0",
   "main": "dist/index.js",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "yarn ts-node index.ts",
     "dist": "yarn tsc",
-    "build-image": "docker build -t heliograph:latest .",
+    "build-image": "docker build -t bored:latest .",
     "lint": "yarn run eslint --ext js,ts --max-warnings=0 ."
   },
   "devDependencies": {
