@@ -1,6 +1,6 @@
 import WebSocket, { Server } from "ws";
 import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } from "http";
-import { LensAgent } from "./lens-agent";
+import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
 import { version } from "../package.json";
@@ -8,7 +8,7 @@ import { version } from "../package.json";
 export class TunnelServer {
   private server?: HttpServer;
   private ws?: Server;
-  private agents: LensAgent[] = [];
+  private agents: Agent[] = [];
 
   start(port = 8080) {
     console.log(`~~ BoreD v${version} ~~`);
@@ -67,7 +67,7 @@ export class TunnelServer {
 
   handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
     console.log("SERVER: agent connected");
-    const agent = new LensAgent(socket, req.headers["X-BoreD-PublicKey"]?.toString() || "");
+    const agent = new Agent(socket, req.headers["X-BoreD-PublicKey"]?.toString() || "");
 
     this.agents.push(agent);
 

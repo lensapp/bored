@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 
-export class LensAgent {
+export class Agent {
   public socket: WebSocket;
   public publicKey: string;
 
