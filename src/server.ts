@@ -32,6 +32,17 @@ export class TunnelServer {
   }
 
   handleRequest(req: IncomingMessage, res: ServerResponse) {
+    if (!req.url) return;
+
+    const url = new URL(req.url, "http://localhost");
+
+    if (url.pathname === "/healthz") {
+      res.writeHead(200);
+      res.end();
+
+      return;
+    }
+
     res.writeHead(404);
     res.end();
   }
