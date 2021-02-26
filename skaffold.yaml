@@ -1,0 +1,21 @@
+apiVersion: skaffold/v2beta10
+kind: Config
+metadata:
+  name: heliograph
+build:
+  artifacts:
+  - image: heliograph
+    sync:
+      infer:
+        - ".dockerignore"
+        - "src/**/*"
+        - "*.ts"
+        - "*.js*"
+        - "yarn.*"
+  local:
+    useBuildkit: true
+deploy:
+  kubectl:
+    manifests:
+    - kubernetes/deployment.yaml
+    - kubernetes/service.yaml

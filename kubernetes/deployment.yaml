@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heliograph
+  labels:
+    app: heliograph
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: heliograph
+  template:
+    metadata:
+      labels:
+        app: heliograph
+    spec:
+      containers:
+      - name: heliograph
+        image: heliograph:latest
+        ports:
+          - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 5
