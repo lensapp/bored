@@ -20,14 +20,14 @@ export class TunnelServer {
     this.server = createServer(this.handleRequest.bind(this));
     this.server.on("upgrade", this.handleUpgrade.bind(this));
     this.server.on("listening", () => {
-      console.log(`listening on port ${port}`);
+      console.log(`SERVER: listening on port ${port}`);
     });
 
     this.server.listen(port);
   }
 
   stop() {
-    console.log("shutting down");
+    console.log("SERVER: shutting down");
     this.server?.close();
   }
 
@@ -56,21 +56,23 @@ export class TunnelServer {
 
     const url = new URL(req.url, "http://localhost");
 
-    if (url.pathname === "/lens-agent/connect") {
-      this.ws?.handleUpgrade(req, socket, head, this.handleAgentSocket.bind(this));
-    } else if (url.pathname === "/lens-client/connect") {
+    if (url.pathname === "/agent/connect") {
+      this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
+        this.handleAgentSocket(req, socket);
+      });
+    } else if (url.pathname === "/client/connect") {
       this.ws?.handleUpgrade(req, socket, head, this.handleClientSocket.bind(this));
     }
   }
 
-  handleAgentSocket(socket: WebSocket) {
-    console.log("agent connected");
-    const agent = new LensAgent(socket);
+  handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
+    console.log("SERVER: agent connected");
+    const agent = new LensAgent(socket, req.headers["X-BoreD-PublicKey"]?.toString() || "");
 
     this.agents.push(agent);
 
     socket.on("close", () => {
-      console.log("agent disconnected");
+      console.log("SERVER: agent disconnected");
       const index = this.agents.findIndex((agent) => agent.socket === socket);
 
       if (index !== -1) {
@@ -80,11 +82,11 @@ export class TunnelServer {
   }
 
   handleClientSocket(socket: WebSocket) {
-    console.log("client connected");
+    console.log("SERVER: client connected");
     const agent = this.agents[Math.floor(Math.random() * this.agents.length)];
 
     if (!agent) {
-      console.log("no agents online, closing client request");
+      console.log("SERVER: no agents online, closing client request");
       socket.close();
 
       return;
