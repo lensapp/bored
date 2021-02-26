@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:
+  name: bored
   labels:
-    app:
+    app: bored
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app:
+      app: bored
   template:
     metadata:
       labels:
-        app:
+        app: bored
     spec:
       containers:
-      - name:
-        image: :latest
+      - name: bored
+        image: bored:latest
         ports:
           - containerPort: 8080
         livenessProbe:

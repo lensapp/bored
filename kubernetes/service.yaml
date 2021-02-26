@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name:
+  name: bored
 spec:
   selector:
-    app:
+    app: bored
   ports:
     - protocol: TCP
       port: 8080
