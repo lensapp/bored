@@ -19,6 +19,9 @@ spec:
         image: bored:latest
         ports:
           - containerPort: 8080
+        env:
+          - name: AGENT_TOKEN
+            value: double0seven
         livenessProbe:
           httpGet:
             path: /healthz

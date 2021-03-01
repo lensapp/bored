@@ -3,15 +3,15 @@ import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } 
 import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
-import { version } from "../package.json";
 
 export class TunnelServer {
+  private agentToken = "";
   private server?: HttpServer;
   private ws?: Server;
   private agents: Agent[] = [];
 
-  start(port = 8080) {
-    console.log(`~~ BoreD v${version} ~~`);
+  start(port = 8080, agentToken: string) {
+    this.agentToken = agentToken;
 
     this.ws = new Server({
       noServer: true
@@ -66,6 +66,23 @@ export class TunnelServer {
   }
 
   handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
+    if (!req.headers.authorization) {
+      console.log("SERVER: agent did not specify authorization header, closing connection.");
+      socket.close(4401);
+
+      return;
+    }
+
+    const authorization = req.headers.authorization.split(" ");
+
+    if (authorization[0].toLowerCase() !== "bearer" && authorization[1] !== this.agentToken) {
+      console.log("SERVER: invalid agent token, closing connection.");
+
+      socket.close(4403);
+
+      return;
+    }
+
     console.log("SERVER: agent connected");
     const agent = new Agent(socket, req.headers["X-BoreD-PublicKey"]?.toString() || "");
 
