@@ -43,6 +43,14 @@ export class TunnelServer {
       return;
     }
 
+    if (url.pathname === "/client/public-key" && this.agents.length > 0) {
+      res.writeHead(200);
+      res.write(this.agents[0].publicKey);
+      res.end();
+
+      return;
+    }
+
     res.writeHead(404);
     res.end();
   }
@@ -84,7 +92,8 @@ export class TunnelServer {
     }
 
     console.log("SERVER: agent connected");
-    const agent = new Agent(socket, req.headers["X-BoreD-PublicKey"]?.toString() || "");
+    const publicKey = Buffer.from(req.headers["x-bored-publickey"]?.toString() || "", "base64").toString("utf-8");
+    const agent = new Agent(socket, publicKey);
 
     this.agents.push(agent);
 
