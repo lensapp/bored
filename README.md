@@ -7,7 +7,7 @@ bore (verb)
 
 > Make (a hole) in something with a tool or by digging.
 
-A reverse tunnel server designed for [Lens](https://github.com/lensapp/lens).
+A reverse tunnel daemon designed for [Lens](https://github.com/lensapp/lens).
 
 ![architecture](./images/architecture.png)
 
