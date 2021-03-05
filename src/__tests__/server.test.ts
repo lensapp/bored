@@ -8,24 +8,22 @@ describe("TunnelServer", () => {
   const port = 51515;
   const secret = "doubleouseven";
 
-  beforeAll(() => {
+  beforeEach(() => {
     server = new TunnelServer();
     server.start(port, secret);
   });
 
   afterEach(() => {
-    server.agents = [];
-  });
-
-  afterAll(() => {
     server?.stop();
   });
+
+  const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
 
   const get = async (path: string) => {
     return got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
   };
 
-  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}): Promise<string> => {
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10): Promise<string> => {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`http://localhost:${port}/${type}/connect`, {
         headers
@@ -37,12 +35,16 @@ describe("TunnelServer", () => {
         timer = setTimeout(() => {
           resolve("open");
           ws.close();
-        }, 10);
+        }, keepOpen);
       });
 
       ws.on("close", (code) => {
-        clearTimeout(timer);
-        if (code >= 4000) reject(code.toString());
+        if (code >= 4000) {
+          clearTimeout(timer);
+          reject(code.toString());
+        } else if (!timer) {
+          resolve("close");
+        }
       });
     });
   };
@@ -96,6 +98,32 @@ describe("TunnelServer", () => {
         };
 
         await expect(connect()).rejects.toBe("4403");
+      });
+    });
+
+    describe("client socket", () => {
+      it("accepts client connection if agent is connected", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${secret}`
+        }, 50);
+
+        await sleep(10);
+
+        const connect = () => {
+          return incomingSocket("client", {});
+        };
+
+        await expect(connect()).resolves.toBe("open");
+
+        await agent;
+      });
+
+      it("rejects client connection if agent is not connected", async () => {
+        const connect = () => {
+          return incomingSocket("client", {});
+        };
+
+        await expect(connect()).rejects.toBe("4404");
       });
     });
   });

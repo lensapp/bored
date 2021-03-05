@@ -113,7 +113,7 @@ export class TunnelServer {
 
     if (!agent) {
       console.log("SERVER: no agents online, closing client request");
-      socket.close();
+      socket.close(4404);
 
       return;
     }
