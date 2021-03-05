@@ -2,7 +2,7 @@
   "name": "bored",
   "version": "0.1.0",
   "main": "dist/index.js",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "dev": "yarn ts-node index.ts",
     "dist": "yarn tsc",
