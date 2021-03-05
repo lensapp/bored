@@ -3,7 +3,7 @@ on:
   - pull_request
 jobs:
   build:
-    name: Lint
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
