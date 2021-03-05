@@ -122,5 +122,9 @@ export class TunnelServer {
     const duplex = WebSocket.createWebSocketStream(socket);
 
     duplex.pipe(stream).pipe(duplex);
+
+    duplex.on("unpipe", () => {
+      socket.close(4410);
+    });
   }
 }

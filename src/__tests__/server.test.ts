@@ -118,6 +118,22 @@ describe("TunnelServer", () => {
         await agent;
       });
 
+      it("disconnects client if agent is disconnected", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${secret}`
+        }, 50);
+
+        await sleep(10);
+
+        const connect = () => {
+          return incomingSocket("client", {}, 200);
+        };
+
+        await expect(connect()).rejects.toBe("4410");
+
+        await agent;
+      });
+
       it("rejects client connection if agent is not connected", async () => {
         const connect = () => {
           return incomingSocket("client", {});

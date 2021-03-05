@@ -10,6 +10,12 @@ export class Agent {
   }
 
   openStream() {
-    return WebSocket.createWebSocketStream(this.socket);
+    const stream = WebSocket.createWebSocketStream(this.socket);
+
+    this.socket.on("close", () => {
+      stream.unpipe();
+    });
+
+    return stream;
   }
 }
