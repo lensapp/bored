@@ -18,10 +18,7 @@ describe("TunnelServer", () => {
   });
 
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
-
-  const get = async (path: string) => {
-    return got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
-  };
+  const get = async (path: string) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
 
   const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10): Promise<string> => {
     return new Promise((resolve, reject) => {
