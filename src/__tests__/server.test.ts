@@ -20,15 +20,19 @@ describe("TunnelServer", () => {
     server?.stop();
   });
 
+  const get = async (path: string) => {
+    return got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
+  };
+
   describe("http endpoints", () => {
     it("responds 404 on /", async () => {
-      const res = await got(`http://localhost:${port}/`, { throwHttpErrors: false });
+      const res = await get("/");
 
       expect(res.statusCode).toBe(404);
     });
 
     it("responds 200 on /healthz", async () => {
-      const res = await got(`http://localhost:${port}/healthz`);
+      const res = await get("/healthz");
 
       expect(res.statusCode).toBe(200);
     });
@@ -36,14 +40,14 @@ describe("TunnelServer", () => {
     it("responds 200 on /client/public-key if agent is connected", async () => {
       server.agents.push(new Agent({} as any, "rsa-public-key"));
 
-      const res = await got(`http://localhost:${port}/client/public-key`);
+      const res = await get("/client/public-key");
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toBe("rsa-public-key");
     });
 
     it("responds 404 on /client/public-key if agent is not connected", async () => {
-      const res = await got(`http://localhost:${port}/client/public-key`, { throwHttpErrors: false });
+      const res = await get("/client/public-key");
 
       expect(res.statusCode).toBe(404);
     });
