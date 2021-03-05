@@ -8,9 +8,9 @@ export class TunnelServer {
   private agentToken = "";
   private server?: HttpServer;
   private ws?: Server;
-  private agents: Agent[] = [];
+  public agents: Agent[] = [];
 
-  start(port = 8080, agentToken: string) {
+  start(port = 8080, agentToken: string): Promise<void> {
     this.agentToken = agentToken;
 
     this.ws = new Server({
@@ -19,11 +19,18 @@ export class TunnelServer {
 
     this.server = createServer(this.handleRequest.bind(this));
     this.server.on("upgrade", this.handleUpgrade.bind(this));
-    this.server.on("listening", () => {
-      console.log(`SERVER: listening on port ${port}`);
+
+    const listenPromise = new Promise<void>((resolve) => {
+      this.server?.on("listening", () => {
+        console.log(`SERVER: listening on port ${port}`);
+        resolve();
+      });
     });
 
+
     this.server.listen(port);
+
+    return listenPromise;
   }
 
   stop() {
@@ -83,7 +90,7 @@ export class TunnelServer {
 
     const authorization = req.headers.authorization.split(" ");
 
-    if (authorization[0].toLowerCase() !== "bearer" && authorization[1] !== this.agentToken) {
+    if (authorization[0].toLowerCase() !== "bearer" || authorization[1] !== this.agentToken) {
       console.log("SERVER: invalid agent token, closing connection.");
 
       socket.close(4403);
@@ -113,7 +120,7 @@ export class TunnelServer {
 
     if (!agent) {
       console.log("SERVER: no agents online, closing client request");
-      socket.close();
+      socket.close(4404);
 
       return;
     }
@@ -122,5 +129,9 @@ export class TunnelServer {
     const duplex = WebSocket.createWebSocketStream(socket);
 
     duplex.pipe(stream).pipe(duplex);
+
+    duplex.on("unpipe", () => {
+      socket.close(4410);
+    });
   }
 }
