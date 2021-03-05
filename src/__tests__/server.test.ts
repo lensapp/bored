@@ -1,6 +1,7 @@
 import { TunnelServer } from "../server";
 import got from "got";
 import { Agent } from "../agent";
+import WebSocket from "ws";
 
 describe("TunnelServer", () => {
   let server: TunnelServer;
@@ -22,6 +23,28 @@ describe("TunnelServer", () => {
 
   const get = async (path: string) => {
     return got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
+  };
+
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(`http://localhost:${port}/${type}/connect`, {
+        headers
+      });
+
+      let timer: NodeJS.Timeout;
+
+      ws.on("open", () => {
+        timer = setTimeout(() => {
+          resolve("open");
+          ws.close();
+        }, 10);
+      });
+
+      ws.on("close", (code) => {
+        clearTimeout(timer);
+        if (code >= 4000) reject(code.toString());
+      });
+    });
   };
 
   describe("http endpoints", () => {
@@ -50,6 +73,30 @@ describe("TunnelServer", () => {
       const res = await get("/client/public-key");
 
       expect(res.statusCode).toBe(404);
+    });
+  });
+
+  describe("websockets", () => {
+    describe("agent socket", () => {
+      it("accepts agent connection with correct authorization header", async () => {
+        const connect = () => {
+          return incomingSocket("agent", {
+            "Authorization": `Bearer ${secret}`
+          });
+        };
+
+        await expect(connect()).resolves.toBe("open");
+      });
+
+      it("rejects agent connection with invalid authorization header", async () => {
+        const connect = () => {
+          return incomingSocket("agent", {
+            "Authorization": `Bearer invalid`
+          });
+        };
+
+        await expect(connect()).rejects.toBe("4403");
+      });
     });
   });
 });

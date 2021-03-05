@@ -83,7 +83,7 @@ export class TunnelServer {
 
     const authorization = req.headers.authorization.split(" ");
 
-    if (authorization[0].toLowerCase() !== "bearer" && authorization[1] !== this.agentToken) {
+    if (authorization[0].toLowerCase() !== "bearer" || authorization[1] !== this.agentToken) {
       console.log("SERVER: invalid agent token, closing connection.");
 
       socket.close(4403);
