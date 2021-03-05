@@ -10,7 +10,7 @@ export class TunnelServer {
   private ws?: Server;
   public agents: Agent[] = [];
 
-  start(port = 8080, agentToken: string) {
+  start(port = 8080, agentToken: string): Promise<void> {
     this.agentToken = agentToken;
 
     this.ws = new Server({
@@ -19,11 +19,18 @@ export class TunnelServer {
 
     this.server = createServer(this.handleRequest.bind(this));
     this.server.on("upgrade", this.handleUpgrade.bind(this));
-    this.server.on("listening", () => {
-      console.log(`SERVER: listening on port ${port}`);
+
+    const listenPromise = new Promise<void>((resolve) => {
+      this.server?.on("listening", () => {
+        console.log(`SERVER: listening on port ${port}`);
+        resolve();
+      });
     });
 
+
     this.server.listen(port);
+
+    return listenPromise;
   }
 
   stop() {

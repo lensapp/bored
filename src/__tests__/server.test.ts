@@ -8,9 +8,9 @@ describe("TunnelServer", () => {
   const port = 51515;
   const secret = "doubleouseven";
 
-  beforeEach(() => {
+  beforeEach(async () => {
     server = new TunnelServer();
-    server.start(port, secret);
+    await server.start(port, secret);
   });
 
   afterEach(() => {
