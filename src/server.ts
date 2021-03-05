@@ -8,7 +8,7 @@ export class TunnelServer {
   private agentToken = "";
   private server?: HttpServer;
   private ws?: Server;
-  private agents: Agent[] = [];
+  public agents: Agent[] = [];
 
   start(port = 8080, agentToken: string) {
     this.agentToken = agentToken;
