@@ -3,14 +3,25 @@ import got from "got";
 import { Agent } from "../agent";
 import WebSocket from "ws";
 
+const idpPublicKey = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv
+vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc
+aT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy
+tvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0
+e+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb
+V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9
+MwIDAQAB
+-----END PUBLIC KEY-----`;
+
 describe("TunnelServer", () => {
   let server: TunnelServer;
   const port = 51515;
   const secret = "doubleouseven";
+  const token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoiIn0.ECrhCVhYJgQAg2CCkY6IY4g9WG7otNDEcujNA8ncKpYmzZQJxRASNY8-gUNlHJhzQMlHJd0jYOLL-hEmqSCJ-WupORgtnzriDljRrqEzAE6Cbsu1MJsi1Y9dM6vg6PjFqONmfDh2KhEai9nQURD4prYfKeMkwoVgey5fuqjiMTw5rdcdULxxZx133Wd4_Y4hQFdOBGtfs54ckXMa5aVDX6itePuhJtt00oMWync-Qlomb9U8m8_VdRRS6cwa2nUEmeLDAGwuPiNKgkBX_noU_AM4UdUmz2_3x3_zkJO9IVMddxuwGSUGsExKoOWs0_l-660YJA7Z5ajI67xLPOFIvQ";
 
   beforeEach(async () => {
     server = new TunnelServer();
-    await server.start(port, secret);
+    await server.start(port, secret, idpPublicKey);
   });
 
   afterEach(() => {
@@ -107,7 +118,9 @@ describe("TunnelServer", () => {
         await sleep(10);
 
         const connect = () => {
-          return incomingSocket("client", {});
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${token}`
+          });
         };
 
         await expect(connect()).resolves.toBe("open");
@@ -123,7 +136,9 @@ describe("TunnelServer", () => {
         await sleep(10);
 
         const connect = () => {
-          return incomingSocket("client", {}, 200);
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${token}`
+          }, 200);
         };
 
         await expect(connect()).rejects.toBe("4410");
@@ -133,7 +148,9 @@ describe("TunnelServer", () => {
 
       it("rejects client connection if agent is not connected", async () => {
         const connect = () => {
-          return incomingSocket("client", {});
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${token}`
+          });
         };
 
         await expect(connect()).rejects.toBe("4404");
