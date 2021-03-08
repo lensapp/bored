@@ -3,15 +3,18 @@ import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } 
 import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
+import * as jwt from "jsonwebtoken";
 
 export class TunnelServer {
   private agentToken = "";
+  private idpPublicKey = "";
   private server?: HttpServer;
   private ws?: Server;
   public agents: Agent[] = [];
 
-  start(port = 8080, agentToken: string): Promise<void> {
+  start(port = 8080, agentToken: string, idpPublicKey: string): Promise<void> {
     this.agentToken = agentToken;
+    this.idpPublicKey = idpPublicKey;
 
     this.ws = new Server({
       noServer: true
@@ -76,8 +79,23 @@ export class TunnelServer {
         this.handleAgentSocket(req, socket);
       });
     } else if (url.pathname === "/client/connect") {
-      this.ws?.handleUpgrade(req, socket, head, this.handleClientSocket.bind(this));
+      this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
+        this.handleClientSocket(req, socket);
+      });
     }
+  }
+
+  parseAuthorization(authHeader: string) {
+    const authorization = authHeader.split(" ");
+
+    if (authorization.length !== 2) {
+      return null;
+    }
+
+    return {
+      type: authorization[0].toLowerCase(),
+      token: authorization[1]
+    };
   }
 
   handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
@@ -88,9 +106,9 @@ export class TunnelServer {
       return;
     }
 
-    const authorization = req.headers.authorization.split(" ");
+    const authorization = this.parseAuthorization(req.headers.authorization);
 
-    if (authorization[0].toLowerCase() !== "bearer" || authorization[1] !== this.agentToken) {
+    if (authorization?.type !== "bearer" || authorization.token !== this.agentToken) {
       console.log("SERVER: invalid agent token, closing connection.");
 
       socket.close(4403);
@@ -114,7 +132,36 @@ export class TunnelServer {
     });
   }
 
-  handleClientSocket(socket: WebSocket) {
+  handleClientSocket(req: IncomingMessage, socket: WebSocket) {
+    if (!req.headers.authorization) {
+      console.log("SERVER: client did not specify authorization header, closing connection.");
+      socket.close(4401);
+
+      return;
+    }
+
+    const authorization = this.parseAuthorization(req.headers.authorization);
+
+    if (authorization?.type !== "bearer") {
+      console.log("SERVER: invalid client token, closing connection.");
+
+      socket.close(4403);
+
+      return;
+    }
+
+    try {
+      jwt.verify(authorization.token, this.idpPublicKey, {
+        algorithms: ["RS256", "RS384", "RS512"]
+      });
+    } catch (error) {
+      console.log("SERVER: client token is not signed by IdP, closing connection");
+      socket.close(4403);
+
+      return;
+    }
+
+
     console.log("SERVER: client connected");
     const agent = this.agents[Math.floor(Math.random() * this.agents.length)];
 
