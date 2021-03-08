@@ -151,7 +151,9 @@ export class TunnelServer {
     }
 
     try {
-      jwt.verify(authorization.token, this.idpPublicKey);
+      jwt.verify(authorization.token, this.idpPublicKey, {
+        algorithms: ["RS256", "RS384", "RS512"]
+      });
     } catch (error) {
       console.log("SERVER: client token is not signed by IdP, closing connection");
       socket.close(4403);

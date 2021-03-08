@@ -128,6 +128,25 @@ describe("TunnelServer", () => {
         await agent;
       });
 
+      it("disconnects client connection token is not signed by IdP", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${secret}`
+        }, 50);
+
+        await sleep(10);
+
+        const invalidToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoiIn0.-6lOaGEVNaq-sxg-NlMMfmE7VQ-KPEqgnIgjUAFVMfQ";
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${invalidToken}`
+          });
+        };
+
+        await expect(connect()).rejects.toBe("4403");
+
+        await agent;
+      });
+
       it("disconnects client if agent is disconnected", async () => {
         const agent = incomingSocket("agent", {
           "Authorization": `Bearer ${secret}`
