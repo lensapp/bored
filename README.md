@@ -7,27 +7,32 @@ bore (verb)
 
 > Make (a hole) in something with a tool or by digging.
 
-BoreD is a secure, end-to-end encrypted, reverse tunnel daemon for Kubernetes API access. It's designed to use with [Lens](https://github.com/lensapp/lens).
+BoreD is a secure, end-to-end encrypted, reverse tunnel daemon for Kubernetes API access. It's designed to work with [Lens - The Kubernetes IDE](https://github.com/lensapp/lens). BoreD combines a client-side reverse proxy, websocket tunnels and end-to-end encryption to expose your Kubernetes API to users.
 
 ## Features
 
-- Secure tunnel from users desktop to Kubernetes APIs
+- Secure tunnel from users desktop to Kubernetes API
 - Impersonation based on IdP issued JWT tokens
+- Works behind firewalls / NAT
 - End-to-end encryption, BoreD daemon cannot see the traffic it tunnels
+- Link encryption using TLS for websockets (`wss://`)
+- Automatic reconnects
 
 
 ## Architecture
 
 ![architecture](./images/architecture.png)
 
-See also [BoreD Agent](https://github.com/lensapp/bored-agent) repository.
+- [BoreD](./README.md)
+- [BoreD Agent](https://github.com/lensapp/bored-agent)
+- [Lens Platform Extension](https://github.com/lensapp/lensplatform-lens-extension) (BoreD Client)
 
 
 ## Encryption
 
 ### Transport Layer Encryption
 
-Both client and agent use websockets to establish socket connection to BoreD daemon. This transport layer can be secured using Secure WebSockets (basically HTTPS).
+Both client and agent use websockets to establish socket connection to BoreD daemon. This transport layer can be secured using Secure WebSockets (TLS).
 
 ### Tunnel Encryption
 
