@@ -4,6 +4,7 @@ import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
 import * as jwt from "jsonwebtoken";
+import { Server as YamuxServer } from "yamux-js";
 
 export class TunnelServer {
   private agentToken = "";
@@ -172,11 +173,16 @@ export class TunnelServer {
       return;
     }
 
-    const stream = agent.openStream();
+    const server = new YamuxServer((stream) => {
+      const agentStream = agent.openStream();
+
+      stream.pipe(agentStream);
+      agentStream.pipe(stream);
+    }, { enableKeepAlive: false });
+
     const duplex = WebSocket.createWebSocketStream(socket);
 
-    duplex.pipe(stream).pipe(duplex);
-
+    duplex.pipe(server).pipe(duplex);
     duplex.on("unpipe", () => {
       socket.close(4410);
     });

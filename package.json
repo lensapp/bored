@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "jsonwebtoken": "^8.5.1",
-    "ws": "^7.4.3"
+    "ws": "^7.4.3",
+    "yamux-js": "^0.0.2"
   }
 }
