@@ -58,7 +58,7 @@ describe("TunnelServer", () => {
   };
 
   describe("http endpoints", () => {
-    it("responds 404 on /", async () => {
+    it("responds 200 on /", async () => {
       const res = await get("/");
 
       expect(res.statusCode).toBe(200);
