@@ -47,9 +47,16 @@ export class TunnelServer {
 
     const url = new URL(req.url, "http://localhost");
 
+    if (url.pathname === "/") {
+      res.writeHead(200);
+      res.end("BoreD");
+
+      return;
+    }
+
     if (url.pathname === "/healthz") {
       res.writeHead(200);
-      res.end();
+      res.end("ok");
 
       return;
     }

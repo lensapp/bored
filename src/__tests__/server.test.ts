@@ -61,7 +61,8 @@ describe("TunnelServer", () => {
     it("responds 404 on /", async () => {
       const res = await get("/");
 
-      expect(res.statusCode).toBe(404);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toBe("BoreD");
     });
 
     it("responds 200 on /healthz", async () => {
