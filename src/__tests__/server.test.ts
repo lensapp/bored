@@ -65,6 +65,12 @@ describe("TunnelServer", () => {
       expect(res.body).toBe("BoreD");
     });
 
+    it("responds 404 on invalid path", async () => {
+      const res = await get("/does-not-exist");
+
+      expect(res.statusCode).toBe(404);
+    });
+
     it("responds 200 on /healthz", async () => {
       const res = await get("/healthz");
 
