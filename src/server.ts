@@ -47,6 +47,10 @@ export class TunnelServer {
 
     const url = new URL(req.url, "http://localhost");
 
+    res.on("finish", () => {
+      console.log(`SERVER: "${req.method} ${req.url}" ${res.statusCode}`);
+    });
+
     if (url.pathname === "/") {
       res.writeHead(200);
       res.end("BoreD");
