@@ -4,7 +4,8 @@ import { Client } from "yamux-js";
 export class Agent {
   public socket: WebSocket;
   public publicKey: string;
-  private client: Client;
+  private yamux: Client;
+  private clients: WebSocket[] = [];
 
   constructor(socket: WebSocket, publicKey: string) {
     this.socket = socket;
@@ -12,11 +13,31 @@ export class Agent {
 
     const stream = WebSocket.createWebSocketStream(this.socket);
 
-    this.client = new Client({ enableKeepAlive: false });
-    this.client.pipe(stream).pipe(this.client);
+    this.yamux = new Client({ enableKeepAlive: false });
+    this.yamux.pipe(stream).pipe(this.yamux);
+
+    this.socket.on("close", () => {
+      this.clients.forEach((client) => this.removeClient(client));
+    });
+  }
+
+  addClient(socket: WebSocket) {
+    this.clients.push(socket);
+  }
+
+  removeClient(socket: WebSocket) {
+    const index = this.clients.findIndex(client => client === socket);
+
+    if (index === -1) {
+      return;
+    }
+
+    const client = this.clients.splice(index, 1)[0];
+
+    client.close(4410);
   }
 
   openStream() {
-    return this.client.open();
+    return this.yamux.open();
   }
 }

@@ -172,6 +172,7 @@ export class TunnelServer {
 
       return;
     }
+    agent.addClient(socket);
 
     const server = new YamuxServer((stream) => {
       const agentStream = agent.openStream();
