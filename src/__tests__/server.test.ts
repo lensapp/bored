@@ -71,7 +71,12 @@ describe("TunnelServer", () => {
     });
 
     it("responds 200 on /client/public-key if agent is connected", async () => {
-      server.agents.push(new Agent({} as any, "rsa-public-key"));
+      const ws = {
+        once: jest.fn(),
+        on: jest.fn()
+      };
+
+      server.agents.push(new Agent(ws as any, "rsa-public-key"));
 
       const res = await get("/client/public-key");
 
