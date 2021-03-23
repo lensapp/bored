@@ -1,10 +1,10 @@
 import WebSocket from "ws";
-import { Client } from "yamux-js";
+import { BoredMplexClient } from "bored-mplex";
 
 export class Agent {
   public socket: WebSocket;
   public publicKey: string;
-  private yamux: Client;
+  private mplex: BoredMplexClient;
   private clients: WebSocket[] = [];
 
   constructor(socket: WebSocket, publicKey: string) {
@@ -13,8 +13,8 @@ export class Agent {
 
     const stream = WebSocket.createWebSocketStream(this.socket);
 
-    this.yamux = new Client({ enableKeepAlive: false });
-    this.yamux.pipe(stream).pipe(this.yamux);
+    this.mplex = new BoredMplexClient();
+    this.mplex.pipe(stream).pipe(this.mplex);
 
     this.socket.on("close", () => {
       this.clients.forEach((client) => this.removeClient(client));
@@ -38,6 +38,6 @@ export class Agent {
   }
 
   openStream() {
-    return this.yamux.open();
+    return this.mplex.openStream();
   }
 }
