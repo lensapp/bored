@@ -4,7 +4,7 @@ import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
 import * as jwt from "jsonwebtoken";
-import { Server as YamuxServer } from "yamux-js";
+import { BoredMplex } from "bored-mplex";
 
 export class TunnelServer {
   private agentToken = "";
@@ -185,16 +185,19 @@ export class TunnelServer {
     }
     agent.addClient(socket);
 
-    const server = new YamuxServer((stream) => {
+    const mplex = new BoredMplex((stream) => {
       const agentStream = agent.openStream();
 
       stream.pipe(agentStream);
       agentStream.pipe(stream);
-    }, { enableKeepAlive: false });
+
+      stream.on("finish", () => agentStream.end());
+      agentStream.on("finish", () => stream.end());
+    });
 
     const duplex = WebSocket.createWebSocketStream(socket);
 
-    duplex.pipe(server).pipe(duplex);
+    duplex.pipe(mplex).pipe(duplex);
     duplex.on("unpipe", () => {
       socket.close(4410);
     });
