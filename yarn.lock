@@ -1042,10 +1042,10 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-bored-mplex@^0.0.14:
-  version "0.0.14"
-  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.14.tgz#c3f2f16b745a8f97985cc2284ad041539c25b406"
-  integrity sha512-Utg2MeSsi1dxRsC7UZtrXyIxXSWjs5wxCU9zPzdOTTg8TqzD7taXQVl3GDaHIpHXhjebaFOsQTKkk/qI3e49UQ==
+bored-mplex@^0.0.15:
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.15.tgz#a5fc1a77a81866b13fdae4bf6143b5281b977ccc"
+  integrity sha512-ApKR7F34WQwrKzGo8ot5rduzA6GDh5iuO+xcd7eNWZbpJCj/RjkSMI3OiC1epDhe8/Tuwy2TtVjHr71HGtaAaA==
   dependencies:
     msgpackr "^1.2.7"
 
