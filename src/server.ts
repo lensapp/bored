@@ -9,13 +9,15 @@ import { BoredMplex } from "bored-mplex";
 export class TunnelServer {
   private agentToken = "";
   private idpPublicKey = "";
+  private clusterAddress?: string;
   private server?: HttpServer;
   private ws?: Server;
   public agents: Agent[] = [];
 
-  start(port = 8080, agentToken: string, idpPublicKey: string): Promise<void> {
+  start(port = 8080, agentToken: string, idpPublicKey: string, clusterAddress = process.env.CLUSTER_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;
     this.idpPublicKey = idpPublicKey;
+    this.clusterAddress = clusterAddress;
 
     this.ws = new Server({
       noServer: true
@@ -164,10 +166,11 @@ export class TunnelServer {
 
     try {
       jwt.verify(authorization.token, this.idpPublicKey, {
-        algorithms: ["RS256", "RS384", "RS512"]
+        algorithms: ["RS256", "RS384", "RS512"],
+        audience: this.clusterAddress
       });
     } catch (error) {
-      console.log("SERVER: client token is not signed by IdP, closing connection");
+      console.log("SERVER: client token is not signed by IdP, or token aud invalid, closing connection");
       socket.close(4403);
 
       return;
