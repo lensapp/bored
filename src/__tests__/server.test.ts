@@ -89,6 +89,13 @@ describe("TunnelServer", () => {
       expect(res.statusCode).toBe(200);
     });
 
+    it("responds 200 on /.well-known/public_key", async () => {
+      const res = await get("/.well-known/public_key");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toBe(idpPublicKey);
+    });
+
     it("responds 200 on /client/public-key if agent is connected", async () => {
       const ws = {
         once: jest.fn(),
