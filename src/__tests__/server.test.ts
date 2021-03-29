@@ -77,8 +77,8 @@ describe("TunnelServer", () => {
       expect(res.statusCode).toBe(200);
     });
 
-    it("responds 200 on /idp/public-key", async () => {
-      const res = await get("/idp/public-key");
+    it("responds 200 on /.well-known/public_key", async () => {
+      const res = await get("/.well-known/public_key");
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toBe(idpPublicKey);

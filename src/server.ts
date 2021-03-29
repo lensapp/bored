@@ -65,7 +65,7 @@ export class TunnelServer {
       return;
     }
 
-    if (url.pathname === "/idp/public-key") {
+    if (url.pathname === "/.well-known/public_key") {
       res.writeHead(200);
       res.write(this.idpPublicKey);
       res.end();
