@@ -7,7 +7,8 @@ import { handleClientPublicKey } from "./request-handlers/client-public-key";
 import { handleAgentSocket } from "./request-handlers/agent-socket";
 import { handleClientSocket } from "./request-handlers/client-socket";
 
-export const defaultClusterId = "default";
+export type ClusterId = string;
+export const defaultClusterId: ClusterId = "default";
 
 export class TunnelServer {
   private server?: HttpServer;
@@ -16,7 +17,7 @@ export class TunnelServer {
   public agentToken = "";
   public idpPublicKey = "";
   public clusterAddress?: string;
-  public agents: Map<string, Agent[]> = new Map();
+  public agents: Map<ClusterId, Agent[]> = new Map();
 
   start(port = 8080, agentToken: string, idpPublicKey: string, clusterAddress = process.env.CLUSTER_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;
