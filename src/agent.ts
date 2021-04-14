@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { BoredMplexClient } from "bored-mplex";
+import { BoredMplex, BoredMplexClient } from "bored-mplex";
 
 export class Agent {
   public socket: WebSocket;
@@ -23,6 +23,23 @@ export class Agent {
 
   addClient(socket: WebSocket) {
     this.clients.push(socket);
+
+    const mplex = new BoredMplex((stream) => {
+      const agentStream = this.openStream();
+
+      stream.pipe(agentStream);
+      agentStream.pipe(stream);
+
+      stream.on("finish", () => agentStream.end());
+      agentStream.on("finish", () => stream.end());
+    });
+
+    const duplex = WebSocket.createWebSocketStream(socket);
+
+    duplex.pipe(mplex).pipe(duplex);
+    duplex.on("unpipe", () => {
+      socket.close(4410);
+    });
   }
 
   removeClient(socket: WebSocket) {
