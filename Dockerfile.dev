@@ -1,0 +1,10 @@
+FROM node:14-alpine
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY . /app
+RUN apk add --update python gcc g++ make && \
+    yarn install --frozen-lockfile
+
+CMD ["yarn", "dev"]
