@@ -4,7 +4,7 @@ import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
 import * as jwt from "jsonwebtoken";
-import { BoredMplex } from "bored-mplex";
+import { parseAuthorization } from "./util";
 
 export class TunnelServer {
   private agentToken = "";
@@ -107,19 +107,6 @@ export class TunnelServer {
     }
   }
 
-  parseAuthorization(authHeader: string) {
-    const authorization = authHeader.split(" ");
-
-    if (authorization.length !== 2) {
-      return null;
-    }
-
-    return {
-      type: authorization[0].toLowerCase(),
-      token: authorization[1]
-    };
-  }
-
   handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
     if (!req.headers.authorization) {
       console.log("SERVER: agent did not specify authorization header, closing connection.");
@@ -128,7 +115,7 @@ export class TunnelServer {
       return;
     }
 
-    const authorization = this.parseAuthorization(req.headers.authorization);
+    const authorization = parseAuthorization(req.headers.authorization);
 
     if (authorization?.type !== "bearer" || authorization.token !== this.agentToken) {
       console.log("SERVER: invalid agent token, closing connection.");
@@ -162,7 +149,7 @@ export class TunnelServer {
       return;
     }
 
-    const authorization = this.parseAuthorization(req.headers.authorization);
+    const authorization = parseAuthorization(req.headers.authorization);
 
     if (authorization?.type !== "bearer") {
       console.log("SERVER: invalid client token, closing connection.");
@@ -195,22 +182,5 @@ export class TunnelServer {
       return;
     }
     agent.addClient(socket);
-
-    const mplex = new BoredMplex((stream) => {
-      const agentStream = agent.openStream();
-
-      stream.pipe(agentStream);
-      agentStream.pipe(stream);
-
-      stream.on("finish", () => agentStream.end());
-      agentStream.on("finish", () => stream.end());
-    });
-
-    const duplex = WebSocket.createWebSocketStream(socket);
-
-    duplex.pipe(mplex).pipe(duplex);
-    duplex.on("unpipe", () => {
-      socket.close(4410);
-    });
   }
 }
