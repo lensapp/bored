@@ -19,17 +19,6 @@ describe("TunnelServer", () => {
   const port = 51515;
   const secret = "doubleouseven";
   const clusterAddress = "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
-  /**
-   * {
-   *   "sub": "lens-user",
-   *   "groups": [
-   *     "dev"
-   *   ],
-   *   "iat": 1516239022,
-   *   "aud": "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663"
-   * }
-   */
-  const token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9ib3JlZC9hMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMifQ.UuBNbUAT6_xcFHarHCR6CSdT63Yuu5_AA9Y5igPHdU8AvawYiY68yAxnms_xIK5d9W3Bq_Sf520dLSyl-Q4se5-Y0uT7LaFCy4nf8nbpbMdZQ0Q7b6j-G-MrcgqdU-FQeBalcuA4YoLEiXDbHioq3LKOtP0AwYNDMSwSJcMuVS-JQOtEaqPDmk-L2Jn-oWw2pV48u82_xg-RMnoCmSm5MPQ_CHPETTH2yRrXD_279Pog47_yi8Qq8a_9_GxbaHTpzxZ3Zb2n1STfVu-hOvkeRTzoydfpJ5lUYroX-YPQ8ZWeCycVAamlvW2KulDdSuPE1R-vTSE9j-Ng9kcyl8rE_w";
 
   /**
    * {
