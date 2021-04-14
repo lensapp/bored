@@ -5,15 +5,18 @@ metadata:
 build:
   artifacts:
   - image: bored
+    docker:
+      dockerfile: Dockerfile
     sync:
       infer:
         - ".dockerignore"
-        - "src/**/*"
+        - "src/**/*.ts"
         - "*.ts"
         - "*.js*"
         - "yarn.*"
   local:
     useBuildkit: true
+    push: false
 deploy:
   kubectl:
     manifests:
