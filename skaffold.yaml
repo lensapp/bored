@@ -6,7 +6,7 @@ build:
   artifacts:
   - image: bored
     docker:
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     sync:
       infer:
         - ".dockerignore"
