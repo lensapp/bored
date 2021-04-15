@@ -17,6 +17,7 @@ BoreD is a secure, end-to-end encrypted, reverse tunnel daemon for Kubernetes AP
 - End-to-end encryption, BoreD daemon cannot see the traffic it tunnels
 - Link encryption using TLS for websockets (`wss://`)
 - Automatic reconnects
+- Handles multiple Kubernetes clusters
 
 
 ## Architecture
@@ -25,8 +26,29 @@ BoreD is a secure, end-to-end encrypted, reverse tunnel daemon for Kubernetes AP
 
 - [BoreD](./README.md)
 - [BoreD Agent](https://github.com/lensapp/bored-agent)
-- [Lens Platform Extension](https://github.com/lensapp/lensplatform-lens-extension) (BoreD Client)
 
+
+## JWT Tokens
+
+### Client
+
+```json
+{
+  "sub": "username",
+  "groups": [],
+  "clusterId": "cluster-uuid",
+  "aud": "https://bored.domain.com/"
+}
+```
+
+### Agent
+
+```json
+{
+  "sub": "cluster-uuid",
+  "aud": "https://bored.domain.com/"
+}
+```
 
 ## Encryption
 

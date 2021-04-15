@@ -3,16 +3,21 @@ import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } 
 import { Agent } from "./agent";
 import { Socket } from "net";
 import { URL } from "url";
-import * as jwt from "jsonwebtoken";
-import { parseAuthorization } from "./util";
+import { handleClientPublicKey } from "./request-handlers/client-public-key";
+import { handleAgentSocket } from "./request-handlers/agent-socket";
+import { handleClientSocket } from "./request-handlers/client-socket";
+
+export type ClusterId = string;
+export const defaultClusterId: ClusterId = "default";
 
 export class TunnelServer {
-  private agentToken = "";
-  private idpPublicKey = "";
-  private clusterAddress?: string;
   private server?: HttpServer;
   private ws?: Server;
-  public agents: Agent[] = [];
+
+  public agentToken = "";
+  public idpPublicKey = "";
+  public clusterAddress?: string;
+  public agents: Map<ClusterId, Agent[]> = new Map();
 
   start(port = 8080, agentToken: string, idpPublicKey: string, clusterAddress = process.env.CLUSTER_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;
@@ -42,6 +47,14 @@ export class TunnelServer {
   stop() {
     console.log("SERVER: shutting down");
     this.server?.close();
+  }
+
+  getAgentsForClusterId(clusterId: string): Agent[] {
+    const agents = this.agents.get(clusterId) || [];
+
+    if (!this.agents.has(clusterId)) this.agents.set(clusterId, agents);
+
+    return agents;
   }
 
   handleRequest(req: IncomingMessage, res: ServerResponse) {
@@ -75,10 +88,8 @@ export class TunnelServer {
       return;
     }
 
-    if (url.pathname === "/client/public-key" && this.agents.length > 0) {
-      res.writeHead(200);
-      res.write(this.agents[0].publicKey);
-      res.end();
+    if (url.pathname === "/client/public-key") {
+      handleClientPublicKey(req, res, this);
 
       return;
     }
@@ -98,89 +109,12 @@ export class TunnelServer {
 
     if (url.pathname === "/agent/connect") {
       this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
-        this.handleAgentSocket(req, socket);
+        handleAgentSocket(req, socket, this);
       });
     } else if (url.pathname === "/client/connect") {
       this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
-        this.handleClientSocket(req, socket);
+        handleClientSocket(req, socket, this);
       });
     }
-  }
-
-  handleAgentSocket(req: IncomingMessage, socket: WebSocket) {
-    if (!req.headers.authorization) {
-      console.log("SERVER: agent did not specify authorization header, closing connection.");
-      socket.close(4401);
-
-      return;
-    }
-
-    const authorization = parseAuthorization(req.headers.authorization);
-
-    if (authorization?.type !== "bearer" || authorization.token !== this.agentToken) {
-      console.log("SERVER: invalid agent token, closing connection.");
-
-      socket.close(4403);
-
-      return;
-    }
-
-    console.log("SERVER: agent connected");
-    const publicKey = Buffer.from(req.headers["x-bored-publickey"]?.toString() || "", "base64").toString("utf-8");
-    const agent = new Agent(socket, publicKey);
-
-    this.agents.push(agent);
-
-    socket.on("close", () => {
-      console.log("SERVER: agent disconnected");
-      const index = this.agents.findIndex((agent) => agent.socket === socket);
-
-      if (index !== -1) {
-        this.agents.splice(index, 1);
-      }
-    });
-  }
-
-  handleClientSocket(req: IncomingMessage, socket: WebSocket) {
-    if (!req.headers.authorization) {
-      console.log("SERVER: client did not specify authorization header, closing connection.");
-      socket.close(4401);
-
-      return;
-    }
-
-    const authorization = parseAuthorization(req.headers.authorization);
-
-    if (authorization?.type !== "bearer") {
-      console.log("SERVER: invalid client token, closing connection.");
-
-      socket.close(4403);
-
-      return;
-    }
-
-    try {
-      jwt.verify(authorization.token, this.idpPublicKey, {
-        algorithms: ["RS256", "RS384", "RS512"],
-        audience: this.clusterAddress
-      });
-    } catch (error) {
-      console.log("SERVER: client token is not signed by IdP, or token aud invalid, closing connection");
-      socket.close(4403);
-
-      return;
-    }
-
-
-    console.log("SERVER: client connected");
-    const agent = this.agents[Math.floor(Math.random() * this.agents.length)];
-
-    if (!agent) {
-      console.log("SERVER: no agents online, closing client request");
-      socket.close(4404);
-
-      return;
-    }
-    agent.addClient(socket);
   }
 }

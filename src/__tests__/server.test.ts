@@ -1,5 +1,5 @@
 import { TunnelServer } from "../server";
-import got from "got";
+import got, { Headers } from "got";
 import { Agent } from "../agent";
 import WebSocket from "ws";
 
@@ -19,6 +19,7 @@ describe("TunnelServer", () => {
   const port = 51515;
   const secret = "doubleouseven";
   const clusterAddress = "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
+
   /**
    * {
    *   "sub": "lens-user",
@@ -26,14 +27,24 @@ describe("TunnelServer", () => {
    *     "dev"
    *   ],
    *   "iat": 1516239022,
+   *   "clusterId": "a026e50d-f9b4-4aa8-ba02-c9722f7f0663",
    *   "aud": "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663"
    * }
    */
-  const token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9ib3JlZC9hMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMifQ.UuBNbUAT6_xcFHarHCR6CSdT63Yuu5_AA9Y5igPHdU8AvawYiY68yAxnms_xIK5d9W3Bq_Sf520dLSyl-Q4se5-Y0uT7LaFCy4nf8nbpbMdZQ0Q7b6j-G-MrcgqdU-FQeBalcuA4YoLEiXDbHioq3LKOtP0AwYNDMSwSJcMuVS-JQOtEaqPDmk-L2Jn-oWw2pV48u82_xg-RMnoCmSm5MPQ_CHPETTH2yRrXD_279Pog47_yi8Qq8a_9_GxbaHTpzxZ3Zb2n1STfVu-hOvkeRTzoydfpJ5lUYroX-YPQ8ZWeCycVAamlvW2KulDdSuPE1R-vTSE9j-Ng9kcyl8rE_w";
+  const jwtToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiY2x1c3RlcklkIjoiYTAyNmU1MGQtZjliNC00YWE4LWJhMDItYzk3MjJmN2YwNjYzIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9ib3JlZC9hMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMifQ.jkTbX_O8UWbYdCRiTv4NEgDkewEOB9QrLOHOm_Ox8BKt7DC4696bbdOwVn_VHist0g6889ms0m8Nr_RKW5BW90ItAsfDx_0cp34_WKPuMBeXYxkfAEabBbhjATfrW1IUTVtV9R_qQ71nbqlhY9UudByfETI8CanjbDP7QYZCxmVCf2HvRML3h6mS1tqHmqZvjRAHY-cFmO8qa6xLp2c1vFMxuCoSZGoGIqoNPaLKIVBbDdjxzOEjO__gQX6ksUZxsHOy13iBre8gbBVi85lhkSCZa9OtXDEAICqsrlpHZvxIYqYMgBNG0YY4sVvvDGJgDxxTyWn8lphKrZyWWtNvjw";
+
+  /**
+   * {
+   *   "sub": "a026e50d-f9b4-4aa8-ba02-c9722f7f0663",
+   *   "iat": 1516239022,
+   *   "aud": "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663"
+   * }
+   */
+  const agentJwtToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMiLCJpYXQiOjE1MTYyMzkwMjIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3QvYm9yZWQvYTAyNmU1MGQtZjliNC00YWE4LWJhMDItYzk3MjJmN2YwNjYzIn0.ih-cyGWn83lwyQRVF4ccZ2fDt8AL78jF533RmAACt-YMR0GtcVuobZZCEoe6pGKI4uujwD8SXMaxPlTA6-bcJcVdgvmo3w4E48Lbz_PLe8A9_o1Q3RP-ak_a7Pq9igB5Whu2pK8E5IeAqjYkE34Uv7HkT9f3UvJRL1ERSZVdVMciW_1BeUfm713gdbGY89leAnff19slPdDAmMghHO1ZoRGzsFM4MvxbxjgPZiZxsOeKqTv3jWLCZ2XEFT1-s7c1K5bS9T3mctd6lgN7tJPVz4ewCsdddSgB0SoYQSMPBrfzOcLgpXl8vvow1chOQb-W-ZuQ7AZeme8CFqdqCDMpAA";
 
   beforeEach(async () => {
     server = new TunnelServer();
-    await server.start(port, secret, idpPublicKey, clusterAddress);
+    await server.start(port, "", idpPublicKey, clusterAddress);
   });
 
   afterEach(() => {
@@ -41,7 +52,7 @@ describe("TunnelServer", () => {
   });
 
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
-  const get = async (path: string) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false });
+  const get = async (path: string, headers?: Headers) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false, headers });
 
   const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -89,20 +100,22 @@ describe("TunnelServer", () => {
       expect(res.statusCode).toBe(200);
     });
 
-    it("responds 200 on /.well-known/public_key", async () => {
+    it("responds 200 on /.well-known/public_key without bearer token", async () => {
       const res = await get("/.well-known/public_key");
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toBe(idpPublicKey);
     });
 
-    it("responds 200 on /client/public-key if agent is connected", async () => {
+    it("responds 200 on /client/public-key without token if agent is connected", async () => {
       const ws = {
         once: jest.fn(),
         on: jest.fn()
       };
 
-      server.agents.push(new Agent(ws as any, "rsa-public-key"));
+      const agents = server.getAgentsForClusterId("default");
+
+      agents.push(new Agent(ws as any, "rsa-public-key"));
 
       const res = await get("/client/public-key");
 
@@ -110,8 +123,30 @@ describe("TunnelServer", () => {
       expect(res.body).toBe("rsa-public-key");
     });
 
-    it("responds 404 on /client/public-key if agent is not connected", async () => {
+    it("responds 200 on /client/public-key with token if agent is connected", async () => {
+      const ws = {
+        once: jest.fn(),
+        on: jest.fn()
+      };
+
+      const agents = server.getAgentsForClusterId("a026e50d-f9b4-4aa8-ba02-c9722f7f0663");
+
+      agents.push(new Agent(ws as any, "rsa-public-key"));
+
+      const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toBe("rsa-public-key");
+    });
+
+    it("responds 404 on /client/public-key without token if agent is not connected", async () => {
       const res = await get("/client/public-key");
+
+      expect(res.statusCode).toBe(404);
+    });
+
+    it("responds 404 on /client/public-key without token if agent is not connected", async () => {
+      const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
 
       expect(res.statusCode).toBe(404);
     });
@@ -119,10 +154,24 @@ describe("TunnelServer", () => {
 
   describe("websockets", () => {
     describe("agent socket", () => {
-      it("accepts agent connection with correct authorization header", async () => {
+      it("accepts agent connection with shared-secret authorization header", async () => {
+        server.stop();
+        server = new TunnelServer();
+        await server.start(port, secret, idpPublicKey, clusterAddress);
+
         const connect = () => {
           return incomingSocket("agent", {
             "Authorization": `Bearer ${secret}`
+          });
+        };
+
+        await expect(connect()).resolves.toBe("open");
+      });
+
+      it("accepts agent connection with jwt authorization header", async () => {
+        const connect = () => {
+          return incomingSocket("agent", {
+            "Authorization": `Bearer ${agentJwtToken}`
           });
         };
 
@@ -143,14 +192,14 @@ describe("TunnelServer", () => {
     describe("client socket", () => {
       it("accepts client connection if agent is connected", async () => {
         const agent = incomingSocket("agent", {
-          "Authorization": `Bearer ${secret}`
+          "Authorization": `Bearer ${agentJwtToken}`
         }, 50);
 
         await sleep(10);
 
         const connect = () => {
           return incomingSocket("client", {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${jwtToken}`
           });
         };
 
@@ -161,7 +210,7 @@ describe("TunnelServer", () => {
 
       it("disconnects client connection if token is not signed by IdP", async () => {
         const agent = incomingSocket("agent", {
-          "Authorization": `Bearer ${secret}`
+          "Authorization": `Bearer ${agentJwtToken}`
         }, 50);
 
         await sleep(10);
@@ -180,7 +229,7 @@ describe("TunnelServer", () => {
 
       it("disconnects client connection if token audience doesn't match cluster address", async () => {
         const agent = incomingSocket("agent", {
-          "Authorization": `Bearer ${secret}`
+          "Authorization": `Bearer ${agentJwtToken}`
         }, 50);
 
         await sleep(10);
@@ -200,14 +249,14 @@ describe("TunnelServer", () => {
 
       it("disconnects client if agent is disconnected", async () => {
         const agent = incomingSocket("agent", {
-          "Authorization": `Bearer ${secret}`
+          "Authorization": `Bearer ${agentJwtToken}`
         }, 50);
 
         await sleep(10);
 
         const connect = () => {
           return incomingSocket("client", {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${jwtToken}`
           }, 200);
         };
 
@@ -219,7 +268,7 @@ describe("TunnelServer", () => {
       it("rejects client connection if agent is not connected", async () => {
         const connect = () => {
           return incomingSocket("client", {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${jwtToken}`
           });
         };
 
