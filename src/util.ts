@@ -28,7 +28,7 @@ export function parseAuthorization(authHeader: string) {
 export function verifyClientToken(token: string, server: TunnelServer) {
   return jwt.verify(token, server.idpPublicKey, {
     algorithms: ["RS256", "RS384", "RS512"],
-    audience: server.clusterAddress
+    audience: server.tunnelAddress
   }) as ClientTokenData;
 }
 
@@ -36,6 +36,6 @@ export function verifyClientToken(token: string, server: TunnelServer) {
 export function verifyAgentToken(token: string, server: TunnelServer) {
   return jwt.verify(token, server.idpPublicKey, {
     algorithms: ["RS256", "RS384", "RS512"],
-    audience: server.clusterAddress
+    audience: server.tunnelAddress
   }) as AgentTokenData;
 }
