@@ -18,7 +18,7 @@ describe("TunnelServer", () => {
   let server: TunnelServer;
   const port = 51515;
   const secret = "doubleouseven";
-  const clusterAddress = "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
+  const tunnelAddress = "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
 
   /**
    * {
@@ -44,7 +44,7 @@ describe("TunnelServer", () => {
 
   beforeEach(async () => {
     server = new TunnelServer();
-    await server.start(port, "", idpPublicKey, clusterAddress);
+    await server.start(port, "", idpPublicKey, tunnelAddress);
   });
 
   afterEach(() => {
@@ -157,7 +157,7 @@ describe("TunnelServer", () => {
       it("accepts agent connection with shared-secret authorization header", async () => {
         server.stop();
         server = new TunnelServer();
-        await server.start(port, secret, idpPublicKey, clusterAddress);
+        await server.start(port, secret, idpPublicKey, tunnelAddress);
 
         const connect = () => {
           return incomingSocket("agent", {

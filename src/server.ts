@@ -16,13 +16,13 @@ export class TunnelServer {
 
   public agentToken = "";
   public idpPublicKey = "";
-  public clusterAddress?: string;
+  public tunnelAddress?: string;
   public agents: Map<ClusterId, Agent[]> = new Map();
 
-  start(port = 8080, agentToken: string, idpPublicKey: string, clusterAddress = process.env.CLUSTER_ADDRESS || ""): Promise<void> {
+  start(port = 8080, agentToken: string, idpPublicKey: string, tunnelAddress = process.env.TUNNEL_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;
     this.idpPublicKey = idpPublicKey;
-    this.clusterAddress = clusterAddress;
+    this.tunnelAddress = tunnelAddress;
 
     this.ws = new Server({
       noServer: true
