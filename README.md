@@ -59,3 +59,10 @@ Both client and agent use websockets to establish socket connection to BoreD dae
 ### Tunnel Encryption
 
 BoreD tunnel encryption is done in two phases. Tunneled data is being encrypted using symmetric encryption (AES-256-GCM). Key exhange is done using asymmetric encryption (RSA-4096) where BoreD agent has the private key and the public key is distributed to clients via BoreD daemon.
+
+## License
+
+Copyright (c) 2021 Mirantis, Inc.
+
+Licensed under the [MIT license](./LICENSE).
+
