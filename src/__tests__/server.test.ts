@@ -18,7 +18,8 @@ describe("TunnelServer", () => {
   let server: TunnelServer;
   const port = 51515;
   const secret = "doubleouseven";
-  const tunnelAddress = "http://localhost/bored/a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
+  const clusterId = "a026e50d-f9b4-4aa8-ba02-c9722f7f0663";
+  const tunnelAddress = `http://localhost/bored/${clusterId}`;
 
   /**
    * {
@@ -54,7 +55,10 @@ describe("TunnelServer", () => {
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
   const get = async (path: string, headers?: Headers) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false, headers });
 
-  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10): Promise<string> => {
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true): Promise<{
+    connection: "open" | "close";
+    ws: WebSocket;
+  }> => {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`http://localhost:${port}/${type}/connect`, {
         headers
@@ -64,8 +68,11 @@ describe("TunnelServer", () => {
 
       ws.on("open", () => {
         timer = setTimeout(() => {
-          resolve("open");
-          ws.close();
+          resolve({ connection: "open", ws });
+
+          if (close) {
+            ws.close();
+          }
         }, keepOpen);
       });
 
@@ -74,7 +81,7 @@ describe("TunnelServer", () => {
           clearTimeout(timer);
           reject(code.toString());
         } else if (!timer) {
-          resolve("close");
+          resolve({ connection: "close", ws });
         }
       });
     });
@@ -165,7 +172,30 @@ describe("TunnelServer", () => {
           });
         };
 
-        await expect(connect()).resolves.toBe("open");
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
+      });
+
+      it("handles agent errors", async () => {
+        server.stop();
+        server = new TunnelServer();
+        await server.start(port, secret, idpPublicKey, tunnelAddress);
+
+        const connect = () => {
+          return incomingSocket("agent", {
+            "Authorization": `Bearer ${secret}`
+          }, undefined, false);
+        };
+
+        const { connection, ws } = await connect();
+
+        expect(connection).toBe("open");
+
+        const agent = server.agents.get("default")?.[0];
+
+        // Simulate error in agent mplex stream
+        (agent as any).mplex.emit("error", new Error());
+
+        ws.close();
       });
 
       it("accepts agent connection with jwt authorization header", async () => {
@@ -175,7 +205,7 @@ describe("TunnelServer", () => {
           });
         };
 
-        await expect(connect()).resolves.toBe("open");
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
       });
 
       it("rejects agent connection with invalid authorization header", async () => {
@@ -203,9 +233,36 @@ describe("TunnelServer", () => {
           });
         };
 
-        await expect(connect()).resolves.toBe("open");
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
 
         await agent;
+      });
+
+      it("handles client errors", async () => {
+        const agentSocket = incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, 50);
+
+        await sleep(10);
+
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${jwtToken}`
+          }, undefined, false);
+        };
+
+        const { connection, ws } = await connect();
+
+        expect(connection).toBe("open");
+
+        await agentSocket;
+
+        const agent = server.agents.get(clusterId)?.[0];
+        const client: WebSocket = (agent as any).clients[0];
+
+        client.emit("error", new Error());
+
+        ws.close();
       });
 
       it("disconnects client connection if token is not signed by IdP", async () => {
