@@ -19,6 +19,16 @@ export class Agent {
     this.socket.on("close", () => {
       this.clients.forEach((client) => this.removeClient(client));
     });
+
+    stream.on("error", error => {
+      console.error(error);
+      this.clients.forEach((client) => this.removeClient(client));
+    });
+
+    this.mplex.on("error", error => {
+      console.error(error);
+      this.clients.forEach((client) => this.removeClient(client));
+    });
   }
 
   addClient(socket: WebSocket) {
@@ -37,7 +47,18 @@ export class Agent {
     const duplex = WebSocket.createWebSocketStream(socket);
 
     duplex.pipe(mplex).pipe(duplex);
+
     duplex.on("unpipe", () => {
+      socket.close(4410);
+    });
+
+    duplex.on("error", (error) => {
+      console.error(error);
+      socket.close(4410);
+    });
+
+    mplex.on("error", (error) => {
+      console.error(error);
       socket.close(4410);
     });
   }
