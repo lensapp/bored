@@ -1,16 +1,10 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { Agent } from "../agent";
-import { defaultClusterId, TunnelServer } from "../server";
+import { TunnelServer } from "../server";
 import { parseAuthorization, verifyClientToken } from "../util";
 
 export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse, server: TunnelServer) {
-  if (!req.headers.authorization) { // old agent
-    handleClientDefaultPublicKey(res, server);
-
-    return;
-  }
-
-  const authorization = parseAuthorization(req.headers.authorization);
+  const authorization = parseAuthorization(req?.headers?.authorization);
 
   if (!authorization || !authorization.token) {
     res.writeHead(403);
@@ -31,12 +25,6 @@ export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse,
 
 
   return;
-}
-
-function handleClientDefaultPublicKey(res: ServerResponse, server: TunnelServer) {
-  const agents = server.getAgentsForClusterId(defaultClusterId);
-
-  respondWithAgentPublicKey(res, agents);
 }
 
 function respondWithAgentPublicKey(res: ServerResponse, agents: Agent[]) {

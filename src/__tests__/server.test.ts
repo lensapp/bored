@@ -114,22 +114,6 @@ describe("TunnelServer", () => {
       expect(res.body).toBe(idpPublicKey);
     });
 
-    it("responds 200 on /client/public-key without token if agent is connected", async () => {
-      const ws = {
-        once: jest.fn(),
-        on: jest.fn()
-      };
-
-      const agents = server.getAgentsForClusterId("default");
-
-      agents.push(new Agent(ws as any, "rsa-public-key"));
-
-      const res = await get("/client/public-key");
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toBe("rsa-public-key");
-    });
-
     it("responds 200 on /client/public-key with token if agent is connected", async () => {
       const ws = {
         once: jest.fn(),
@@ -146,13 +130,13 @@ describe("TunnelServer", () => {
       expect(res.body).toBe("rsa-public-key");
     });
 
-    it("responds 404 on /client/public-key without token if agent is not connected", async () => {
+    it("responds 403 on /client/public-key without token if agent is not connected", async () => {
       const res = await get("/client/public-key");
 
-      expect(res.statusCode).toBe(404);
+      expect(res.statusCode).toBe(403);
     });
 
-    it("responds 404 on /client/public-key without token if agent is not connected", async () => {
+    it("responds 404 on /client/public-key with token if agent is not connected", async () => {
       const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
 
       expect(res.statusCode).toBe(404);

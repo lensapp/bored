@@ -12,7 +12,11 @@ export type AgentTokenData = {
   aud: string;
 };
 
-export function parseAuthorization(authHeader: string) {
+export function parseAuthorization(authHeader?: string) {
+  if (!authHeader) {
+    return null;
+  }
+
   const authorization = authHeader.split(" ");
 
   if (authorization.length !== 2) {
