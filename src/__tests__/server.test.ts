@@ -150,6 +150,12 @@ describe("TunnelServer", () => {
 
       expect(res.statusCode).toBe(404);
     });
+
+    it("responds 403 on /client/public-key with invalid token", async () => {
+      const res = await get("/client/public-key", { "Authorization": `Bearer this.is.invalid`});
+
+      expect(res.statusCode).toBe(403);
+    });
   });
 
   describe("websockets", () => {

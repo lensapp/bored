@@ -25,7 +25,7 @@ export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse,
 
     respondWithAgentPublicKey(res, agents);
   } catch(error) {
-    res.writeHead(4403);
+    res.writeHead(403);
     res.end();
   }
 
