@@ -1,5 +1,6 @@
 import WebSocket from "ws";
 import { BoredMplex, BoredMplexClient } from "bored-mplex";
+import { captureException } from "./error-reporter";
 
 export class Agent {
   public socket: WebSocket;
@@ -23,11 +24,13 @@ export class Agent {
     stream.on("error", error => {
       console.error(error);
       this.clients.forEach((client) => this.removeClient(client));
+      captureException(error);
     });
 
     this.mplex.on("error", error => {
       console.error(error);
       this.clients.forEach((client) => this.removeClient(client));
+      captureException(error);
     });
   }
 

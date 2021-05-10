@@ -1,7 +1,10 @@
 import { TunnelServer } from "./src/server";
 import { version } from "./package.json";
+import { captureException, initExceptionHandler } from "./src/error-reporter";
 
 console.log(`~~ BoreD v${version} ~~`);
+
+initExceptionHandler();
 
 const serverPort = parseInt(process.env.PORT || "8080");
 const agentToken = process.env.AGENT_TOKEN || "";
@@ -11,6 +14,13 @@ if (!idpPublicKey) {
   console.error("missing IDP_PUBLIC_KEY env, cannot continue");
   process.exit(1);
 }
+
+process.on("uncaughtException", (err) => {
+  captureException(err);
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
 
 const server = new TunnelServer();
 
