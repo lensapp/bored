@@ -1192,10 +1192,10 @@ binary-extensions@^2.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"
   integrity sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
 
-bored-mplex@^0.0.15:
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.15.tgz#a5fc1a77a81866b13fdae4bf6143b5281b977ccc"
-  integrity sha512-ApKR7F34WQwrKzGo8ot5rduzA6GDh5iuO+xcd7eNWZbpJCj/RjkSMI3OiC1epDhe8/Tuwy2TtVjHr71HGtaAaA==
+bored-mplex@^0.0.16:
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.16.tgz#226cbfb548d439940c5620c4cb0c81e75a4151ad"
+  integrity sha512-h04M7lU2OZINrNbc2HgZ39dFLXptfLeL9fkRw49naXpxBFB2XgVmPFzHXA80WC2fnJQ/UpS86INTAQYVCgF+SA==
   dependencies:
     msgpackr "^1.2.7"
 
