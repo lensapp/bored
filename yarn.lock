@@ -1192,12 +1192,12 @@ binary-extensions@^2.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"
   integrity sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
 
-bored-mplex@^0.0.16:
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.16.tgz#226cbfb548d439940c5620c4cb0c81e75a4151ad"
-  integrity sha512-h04M7lU2OZINrNbc2HgZ39dFLXptfLeL9fkRw49naXpxBFB2XgVmPFzHXA80WC2fnJQ/UpS86INTAQYVCgF+SA==
+bored-mplex@^0.0.17:
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.17.tgz#b1237998529981a23248a872b3f8b788b0c58f00"
+  integrity sha512-nPyxQSySRjFsHr5kp2uacOD03hRT63i5+Uia+iYXvfj8ZeBAK5DjTjY+pGfB747fGJ6Dayv71zRs1YI3N68oow==
   dependencies:
-    msgpackr "^1.2.7"
+    msgpackr "1.2.9"
 
 boxen@^4.2.0:
   version "4.2.0"
@@ -3638,20 +3638,20 @@ ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
 
-msgpackr-extract@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/msgpackr-extract/-/msgpackr-extract-1.0.6.tgz#65713a266de36d7dce8edcb766a7b4e5aa5f12ca"
-  integrity sha512-xDZjVWdBDQqohlB14/tbuhtFGsnQqZxE9/aJNz4iTxfGANtuajSCC6wJ72vYPR/k3hKtgLyL76E7xi6t2hcS+Q==
+msgpackr-extract@^1.0.7:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/msgpackr-extract/-/msgpackr-extract-1.0.11.tgz#68dd2e5da3f45788624e44190a25730c9f455d90"
+  integrity sha512-qE31O3AX4zUxGcf0eIxYF1h2n6FnJHmsfiT5M/aAeGmHQmiWJCkqeIDXGD0trDFQ7/tb8KBN69LLBQpon2WQnQ==
   dependencies:
     nan "^2.14.2"
     node-gyp-build "^4.2.3"
 
-msgpackr@^1.2.7:
-  version "1.2.7"
-  resolved "https://registry.yarnpkg.com/msgpackr/-/msgpackr-1.2.7.tgz#374e17a294b52f2155bf3d54182a0888be286cad"
-  integrity sha512-U6Sef+XZjTRQoXZt9GPFf/2h4yhjsB2Kvb1Uq6N19wliryVvrq8onYPzgFnm9/byjDzpRWbJqXesp2AqX15Htg==
+msgpackr@1.2.9:
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/msgpackr/-/msgpackr-1.2.9.tgz#1a4735be9618794592ab710fdd77a7f5392f3ba9"
+  integrity sha512-0/Vrb0H+yFUzwUoO+lcG1L82qPS5UeGZGoqFF82BedfAD3q3VLBVl8ZjFgdBaYYN+arKKtjKEJk9I+pH/xRSFA==
   optionalDependencies:
-    msgpackr-extract "^1.0.6"
+    msgpackr-extract "^1.0.7"
 
 nan@^2.14.2:
   version "2.14.2"
