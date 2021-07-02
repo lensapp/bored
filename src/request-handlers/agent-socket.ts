@@ -48,14 +48,14 @@ export function handleAgentSocket(req: IncomingMessage, socket: WebSocket, serve
 
   const agents = server.getAgentsForClusterId(clusterId);
 
-  console.log("SERVER: agent connected");
+  console.log("SERVER: agent connected. Cluster id: %s", clusterId);
   const publicKey = Buffer.from(req.headers["x-bored-publickey"]?.toString() || "", "base64").toString("utf-8");
   const agent = new Agent(socket, publicKey);
 
   agents.push(agent);
 
   socket.on("close", () => {
-    console.log("SERVER: agent disconnected");
+    console.log("SERVER: agent disconnected. Cluster id: %s", clusterId);
     const index = agents.findIndex((agent) => agent.socket === socket);
 
     if (index !== -1) {
