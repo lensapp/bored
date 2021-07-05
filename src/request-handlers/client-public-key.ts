@@ -17,7 +17,7 @@ export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse,
     const tokenData = verifyClientToken(authorization?.token, server);
     const agents = server.getAgentsForClusterId(tokenData.clusterId);
 
-    respondWithAgentPublicKey(res, agents);
+    respondWithAgentPublicKey(res, agents, tokenData.clusterId);
   } catch(error) {
     res.writeHead(403);
     res.end();
@@ -27,8 +27,9 @@ export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse,
   return;
 }
 
-function respondWithAgentPublicKey(res: ServerResponse, agents: Agent[]) {
+function respondWithAgentPublicKey(res: ServerResponse, agents: Agent[], clusterId: String) {
   if (agents.length === 0) {
+    console.log(`SERVER: respondWithAgentPublicKey - Agents Length is 0. Cluster id: ${clusterId}`);
     res.writeHead(404);
     res.end();
 

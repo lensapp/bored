@@ -94,6 +94,7 @@ export class TunnelServer {
       return;
     }
 
+    console.log(`SERVER: Unknown request URL path: ${url.pathname}`);
     res.writeHead(404);
     res.end();
   }
