@@ -5,7 +5,7 @@ import { Socket } from "net";
 import { URL } from "url";
 import { handleClientPublicKey } from "./request-handlers/client-public-key";
 import { handleAgentSocket } from "./request-handlers/agent-socket";
-import { handleClientSocket } from "./request-handlers/client-socket";
+import { handleClientSocket, handleClientPresenceSocket } from "./request-handlers/client-socket";
 
 export type ClusterId = string;
 export const defaultClusterId: ClusterId = "default";
@@ -115,6 +115,10 @@ export class TunnelServer {
     } else if (url.pathname === "/client/connect") {
       this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
         handleClientSocket(req, socket, this);
+      });
+    } else if (url.pathname === "/client/presence") {
+      this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
+        handleClientPresenceSocket(req, socket, this);
       });
     }
   }
