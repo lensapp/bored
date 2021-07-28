@@ -83,21 +83,16 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
     return;
   }
 
-
   setInterval(function() {
-
     const agents = server.getAgentsForClusterId(clusterId);
-    const agent = agents[Math.floor(Math.random() * agents.length)];
-  
-    if (!agent) {
-      console.log("SERVER: no agents online, closing client request");
-      socket.close(4404);
-  
-      return;
-    }
-    agent.clients.forEach(client => {
-      socket.send(client.userId);
+    
+    agents.forEach(agent => {
+      if(agent){
+        agent.clients.forEach(client => {
+          socket.send(client.userId);
+        });
+      }
     });
-  }, 1000);
+  }, 5000);
 
 }
