@@ -453,8 +453,12 @@ describe("TunnelServer", () => {
         }, undefined, false);
 
         presence.ws.onmessage = (message) => {
-          //console.log(message.data);
-          expect(message.data).toBe(JSON.stringify([["lens-user"]]));
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+                "userIds" : ["lens-user"]
+              }
+            })
+          );
         };
 
         await sleep(1500);

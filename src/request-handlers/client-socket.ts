@@ -87,10 +87,11 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
     const agents = server.getAgentsForClusterId(clusterId);
 
     socket.send(
-      JSON.stringify(
-        agents.map(agent => agent.clients.map(client => client.userId))
-      )
+      JSON.stringify({
+        "presence" : {
+          "userIds": agents.flatMap(agent => agent.clients.map(client => client.userId))
+        } 
+      })
     );
   }, 1000);
-
 }
