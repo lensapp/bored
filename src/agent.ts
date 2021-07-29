@@ -11,7 +11,6 @@ export class Agent {
   public socket: WebSocket;
   public publicKey: string;
   public clients: Client[] = [];
-  public users: string[] = [];
   private mplex: BoredMplexClient;
 
   constructor(socket: WebSocket, publicKey: string) {

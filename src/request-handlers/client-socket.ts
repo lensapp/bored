@@ -86,13 +86,11 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
   setInterval(function() {
     const agents = server.getAgentsForClusterId(clusterId);
 
-    agents.forEach(agent => {
-      if(agent){
-        agent.clients.forEach(client => {
-          socket.send(client.userId); //TODO: use descriptive JSON message to transfer this information
-        });
-      }
-    });
-  }, 5000);
+    socket.send(
+      JSON.stringify(
+        agents.map(agent => agent.clients.map(client => client.userId))
+      )
+    );
+  }, 1000);
 
 }
