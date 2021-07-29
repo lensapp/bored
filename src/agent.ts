@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import { BoredMplex, BoredMplexClient } from "bored-mplex";
 import { captureException } from "./error-reporter";
 
-interface Client {
+export interface Client {
   socket: WebSocket;
   userId: string;
 }
