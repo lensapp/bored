@@ -342,35 +342,6 @@ describe("TunnelServer", () => {
         await agent;
       });
 
-      /*
-      it("handles client errors", async () => {
-        const agentSocket = incomingSocket("agent", {
-          "Authorization": `Bearer ${agentJwtToken}`
-        }, 50);
-
-        await sleep(10);
-
-        const connect = () => {
-          return incomingSocket("client", {
-            "Authorization": `Bearer ${jwtToken}`
-          }, undefined, false, "presence");
-        };
-
-        const { connection, ws } = await connect();
-
-        expect(connection).toBe("open");
-
-        await agentSocket;
-
-        const agent = server.agents.get(clusterId)?.[0];
-        const client: Client = (agent as any).clients[0];
-
-        client.socket.emit("error", new Error());
-
-        ws.close();
-      });
-      */
-
       it("disconnects client connection if token is not signed by IdP", async () => {
         const agent = incomingSocket("agent", {
           "Authorization": `Bearer ${agentJwtToken}`
