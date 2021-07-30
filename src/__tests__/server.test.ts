@@ -34,7 +34,7 @@ describe("TunnelServer", () => {
    */
   const jwtToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiY2x1c3RlcklkIjoiYTAyNmU1MGQtZjliNC00YWE4LWJhMDItYzk3MjJmN2YwNjYzIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9ib3JlZC9hMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMifQ.jkTbX_O8UWbYdCRiTv4NEgDkewEOB9QrLOHOm_Ox8BKt7DC4696bbdOwVn_VHist0g6889ms0m8Nr_RKW5BW90ItAsfDx_0cp34_WKPuMBeXYxkfAEabBbhjATfrW1IUTVtV9R_qQ71nbqlhY9UudByfETI8CanjbDP7QYZCxmVCf2HvRML3h6mS1tqHmqZvjRAHY-cFmO8qa6xLp2c1vFMxuCoSZGoGIqoNPaLKIVBbDdjxzOEjO__gQX6ksUZxsHOy13iBre8gbBVi85lhkSCZa9OtXDEAICqsrlpHZvxIYqYMgBNG0YY4sVvvDGJgDxxTyWn8lphKrZyWWtNvjw";
   
-   /**
+  /**
    * {
    *   "sub": "a026e50d-f9b4-4aa8-ba02-c9722f7f0663",
    *   "iat": 1516239022,
@@ -419,9 +419,9 @@ describe("TunnelServer", () => {
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
             "presence" : {        
-                "userIds" : []
-              }
-            })
+              "userIds" : []
+            }
+          })
           );
         };
 
@@ -449,9 +449,9 @@ describe("TunnelServer", () => {
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
             "presence" : {        
-                "userIds" : ["lens-user"]
-              }
-            })
+              "userIds" : ["lens-user"]
+            }
+          })
           );
         };
 
@@ -474,9 +474,9 @@ describe("TunnelServer", () => {
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
             "presence" : {        
-                "userIds" : ["lens-user"]
-              }
-            })
+              "userIds" : ["lens-user"]
+            }
+          })
           );
         };
 
@@ -516,9 +516,9 @@ describe("TunnelServer", () => {
           console.log(message.data);
           expect(message.data).toBe(JSON.stringify({ 
             "presence" : {        
-                "userIds" : []
-              }
-            })
+              "userIds" : []
+            }
+          })
           );
         };
 
