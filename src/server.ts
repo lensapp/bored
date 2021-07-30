@@ -6,9 +6,11 @@ import { URL } from "url";
 import { handleClientPublicKey } from "./request-handlers/client-public-key";
 import { handleAgentSocket } from "./request-handlers/agent-socket";
 import { handleClientSocket, handleClientPresenceSocket } from "./request-handlers/client-socket";
+import { EventEmitter } from "events";
 
 export type ClusterId = string;
 export const defaultClusterId: ClusterId = "default";
+const eventEmitter = new EventEmitter();
 
 export class TunnelServer {
   private server?: HttpServer;
@@ -18,6 +20,9 @@ export class TunnelServer {
   public idpPublicKey = "";
   public tunnelAddress?: string;
   public agents: Map<ClusterId, Agent[]> = new Map();
+  emit = eventEmitter.emit;
+  on = eventEmitter.on;
+  off = eventEmitter.off;
 
   start(port = 8080, agentToken: string, idpPublicKey: string, tunnelAddress = process.env.TUNNEL_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;

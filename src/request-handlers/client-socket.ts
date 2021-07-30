@@ -47,7 +47,6 @@ export function handleClientSocket(req: IncomingMessage, socket: WebSocket, serv
     return;
   }
   agent.addClient(socket, userId);
-
 }
 
 
@@ -83,15 +82,26 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
     return;
   }
 
-  setInterval(function() {
-    const agents = server.getAgentsForClusterId(clusterId);
+  setTimeout(function() {
+    sendPresenceData(socket, server, clusterId);
+  }, 50);
+  
+  server.on("ClientConnected", () => {
+    sendPresenceData(socket, server, clusterId);
+  });
 
-    socket.send(
-      JSON.stringify({
-        "presence" : {
-          "userIds": agents.flatMap(agent => agent.clients.map(client => client.userId))
-        } 
-      })
-    );
-  }, 1000);
+  server.on("ClientDisconnected", () => {
+    sendPresenceData(socket, server, clusterId);
+  });
+}
+
+function sendPresenceData(socket: WebSocket, server: TunnelServer, clusterId: string) {
+  const agents = server.getAgentsForClusterId(clusterId);
+  socket.send(
+    JSON.stringify({
+      "presence" : {
+        "userIds": agents.flatMap(agent => agent.clients.map(client => client.userId))
+      } 
+    })
+  );
 }

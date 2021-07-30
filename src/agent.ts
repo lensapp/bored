@@ -1,6 +1,7 @@
 import WebSocket from "ws";
 import { BoredMplex, BoredMplexClient } from "bored-mplex";
 import { captureException } from "./error-reporter";
+import { TunnelServer } from "./server";
 
 export interface Client {
   socket: WebSocket;
@@ -12,10 +13,12 @@ export class Agent {
   public publicKey: string;
   public clients: Client[] = [];
   private mplex: BoredMplexClient;
+  private server: TunnelServer;
 
-  constructor(socket: WebSocket, publicKey: string) {
+  constructor(socket: WebSocket, publicKey: string, server: TunnelServer) {
     this.socket = socket;
     this.publicKey = publicKey;
+    this.server = server;
 
     const stream = WebSocket.createWebSocketStream(this.socket);
 
@@ -69,6 +72,8 @@ export class Agent {
       console.error(error);
       socket.close(4410);
     });
+
+    this.server.emit("ClientConnected", {});
   }
 
   removeClient(socket: WebSocket) {
@@ -81,6 +86,8 @@ export class Agent {
     const client = this.clients.splice(index, 1)[0];
 
     client.socket.close(4410);
+
+    this.server.emit("ClientDisconnected", {});
   }
 
   openStream() {

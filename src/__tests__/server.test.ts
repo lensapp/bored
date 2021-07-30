@@ -122,7 +122,7 @@ describe("TunnelServer", () => {
 
       const agents = server.getAgentsForClusterId("a026e50d-f9b4-4aa8-ba02-c9722f7f0663");
 
-      agents.push(new Agent(ws as any, "rsa-public-key"));
+      agents.push(new Agent(ws as any, "rsa-public-key", server));
 
       const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
 
@@ -438,11 +438,30 @@ describe("TunnelServer", () => {
         await expect(connect()).resolves.toHaveProperty("connection", "open");
       });
 
-      it("sends userIds per agent to client presence socket after agent and client successfully connected", async () => {
+      it("sends empty presence json to client presence socket when socket is open", async () => {
+        expect.assertions(1);
 
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
+                
+        presence.ws.onmessage = (message) => {
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+                "userIds" : []
+              }
+            })
+          );
+        };
+
+        await sleep(200); //waits until first message was sent
+
+        presence.ws.close();
+      });
+
+
+      it("sends presence json to client presence socket when socket is open and clients are already connected", async () => {
+        expect.assertions(1);
 
         const agent = await incomingSocket("agent", {
           "Authorization": `Bearer ${agentJwtToken}`
@@ -451,6 +470,35 @@ describe("TunnelServer", () => {
         const client = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        presence.ws.onmessage = (message) => {
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+                "userIds" : ["lens-user"]
+              }
+            })
+          );
+        };
+
+        await sleep(200); //waits until first message was sent
+
+        presence.ws.close();
+        client.ws.close();
+        agent.ws.close();
+      });
+
+      it("sends userIds per agent to client presence socket after agent and client connected", async () => {
+        expect.assertions(1);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        await sleep(200); //waits until first message was sent
 
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
@@ -461,14 +509,57 @@ describe("TunnelServer", () => {
           );
         };
 
-        await sleep(1500);
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        await sleep(100); //waits until ClientConnected message was sent
 
         presence.ws.close();
         client.ws.close();
         agent.ws.close();
-
-        await sleep(10);
       });
+
+      it("sends empty presence json to client presence socket after agent and client connected and disconnected", async () => {
+        expect.assertions(1);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        await sleep(200); //waits until first message was sent
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        presence.ws.onmessage = (message) => {
+          console.log(message.data);
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+                "userIds" : []
+              }
+            })
+          );
+        };
+
+        agent.ws.close();
+        client.ws.close();
+
+        await sleep(200); //waits until ClientDisconnected message was received
+    
+        presence.ws.close();
+      });
+
+      
     });
   });
 });
