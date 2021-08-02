@@ -43,7 +43,6 @@ export class TunnelServer {
       });
     });
 
-
     this.server.listen(port);
 
     return listenPromise;
@@ -123,7 +122,7 @@ export class TunnelServer {
       });
     } else if (url.pathname === "/client/presence") {
       this.ws?.handleUpgrade(req, socket, head, (socket: WebSocket) => {
-        handleClientPresenceSocket(req, socket, this);
+        handleClientPresenceSocket(req, socket, this, parseInt(process.env.WS_FIRST_MESSAGE_DELAY || ""));
       });
     }
   }
