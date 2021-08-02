@@ -415,10 +415,10 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         presence.ws.onmessage = (message) => {
-          expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+          expect(message.data).toBe(JSON.stringify({
+            "presence" : {
               "userIds" : []
             }
           })
@@ -445,10 +445,10 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : ["lens-user"]
             }
           })
@@ -468,12 +468,12 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         await sleep(200); //waits until first message was sent
 
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : ["lens-user"]
             }
           })
@@ -501,7 +501,7 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         await sleep(200); //waits until first message was sent
 
         const agent = await incomingSocket("agent", {
@@ -515,7 +515,7 @@ describe("TunnelServer", () => {
         presence.ws.onmessage = (message) => {
           console.log(message.data);
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : []
             }
           })
@@ -526,11 +526,9 @@ describe("TunnelServer", () => {
         client.ws.close();
 
         await sleep(200); //waits until ClientDisconnected message was received
-    
+
         presence.ws.close();
       });
-
-      
     });
   });
 });

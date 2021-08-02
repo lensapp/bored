@@ -50,7 +50,7 @@ export function handleClientSocket(req: IncomingMessage, socket: WebSocket, serv
 }
 
 
-export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer) {
+export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer, firstMessageDelay = 0) {
 
   if (!req.headers.authorization) {
     console.log("SERVER: client did not specify authorization header, closing connection.");
@@ -84,8 +84,8 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
 
   setTimeout(function() {
     sendPresenceData(socket, server, clusterId);
-  }, 50);
-  
+  }, firstMessageDelay);
+
   server.on("ClientConnected", () => {
     sendPresenceData(socket, server, clusterId);
   });
