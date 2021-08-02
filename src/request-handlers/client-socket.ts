@@ -97,6 +97,7 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
 
 function sendPresenceData(socket: WebSocket, server: TunnelServer, clusterId: string) {
   const agents = server.getAgentsForClusterId(clusterId);
+
   socket.send(
     JSON.stringify({
       "presence" : {
