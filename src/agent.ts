@@ -1,16 +1,24 @@
 import WebSocket from "ws";
 import { BoredMplex, BoredMplexClient } from "bored-mplex";
 import { captureException } from "./error-reporter";
+import { TunnelServer } from "./server";
+
+export interface Client {
+  socket: WebSocket;
+  userId: string;
+}
 
 export class Agent {
   public socket: WebSocket;
   public publicKey: string;
+  public clients: Client[] = [];
   private mplex: BoredMplexClient;
-  private clients: WebSocket[] = [];
+  private server: TunnelServer;
 
-  constructor(socket: WebSocket, publicKey: string) {
+  constructor(socket: WebSocket, publicKey: string, server: TunnelServer) {
     this.socket = socket;
     this.publicKey = publicKey;
+    this.server = server;
 
     const stream = WebSocket.createWebSocketStream(this.socket);
 
@@ -18,24 +26,24 @@ export class Agent {
     this.mplex.pipe(stream).pipe(this.mplex);
 
     this.socket.on("close", () => {
-      this.clients.forEach((client) => this.removeClient(client));
+      this.clients.forEach((client) => this.removeClient(client.socket));
     });
 
     stream.on("error", error => {
       console.error(error);
-      this.clients.forEach((client) => this.removeClient(client));
+      this.clients.forEach((client) => this.removeClient(client.socket));
       captureException(error);
     });
 
     this.mplex.on("error", error => {
       console.error(error);
-      this.clients.forEach((client) => this.removeClient(client));
+      this.clients.forEach((client) => this.removeClient(client.socket));
       captureException(error);
     });
   }
 
-  addClient(socket: WebSocket) {
-    this.clients.push(socket);
+  addClient(socket: WebSocket, userId: string) {
+    this.clients.push({ socket, userId });
 
     const mplex = new BoredMplex((stream) => {
       const agentStream = this.openStream();
@@ -64,10 +72,12 @@ export class Agent {
       console.error(error);
       socket.close(4410);
     });
+
+    this.server.emit("ClientConnected", {});
   }
 
   removeClient(socket: WebSocket) {
-    const index = this.clients.findIndex(client => client === socket);
+    const index = this.clients.findIndex(client => client.socket === socket);
 
     if (index === -1) {
       return;
@@ -75,7 +85,9 @@ export class Agent {
 
     const client = this.clients.splice(index, 1)[0];
 
-    client.close(4410);
+    client.socket.close(4410);
+
+    this.server.emit("ClientDisconnected", {});
   }
 
   openStream() {

@@ -1,6 +1,6 @@
 import { TunnelServer } from "../server";
 import got, { Headers } from "got";
-import { Agent } from "../agent";
+import { Agent, Client } from "../agent";
 import WebSocket from "ws";
 
 // jwt.io public key, new tokens can be created in https://jwt.io/
@@ -33,7 +33,7 @@ describe("TunnelServer", () => {
    * }
    */
   const jwtToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiY2x1c3RlcklkIjoiYTAyNmU1MGQtZjliNC00YWE4LWJhMDItYzk3MjJmN2YwNjYzIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9ib3JlZC9hMDI2ZTUwZC1mOWI0LTRhYTgtYmEwMi1jOTcyMmY3ZjA2NjMifQ.jkTbX_O8UWbYdCRiTv4NEgDkewEOB9QrLOHOm_Ox8BKt7DC4696bbdOwVn_VHist0g6889ms0m8Nr_RKW5BW90ItAsfDx_0cp34_WKPuMBeXYxkfAEabBbhjATfrW1IUTVtV9R_qQ71nbqlhY9UudByfETI8CanjbDP7QYZCxmVCf2HvRML3h6mS1tqHmqZvjRAHY-cFmO8qa6xLp2c1vFMxuCoSZGoGIqoNPaLKIVBbDdjxzOEjO__gQX6ksUZxsHOy13iBre8gbBVi85lhkSCZa9OtXDEAICqsrlpHZvxIYqYMgBNG0YY4sVvvDGJgDxxTyWn8lphKrZyWWtNvjw";
-
+  
   /**
    * {
    *   "sub": "a026e50d-f9b4-4aa8-ba02-c9722f7f0663",
@@ -55,12 +55,12 @@ describe("TunnelServer", () => {
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
   const get = async (path: string, headers?: Headers) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false, headers });
 
-  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true): Promise<{
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect"): Promise<{
     connection: "open" | "close";
     ws: WebSocket;
   }> => {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`http://localhost:${port}/${type}/connect`, {
+      const ws = new WebSocket(`http://localhost:${port}/${type}/${endpoint}`, {
         headers
       });
 
@@ -122,7 +122,7 @@ describe("TunnelServer", () => {
 
       const agents = server.getAgentsForClusterId("a026e50d-f9b4-4aa8-ba02-c9722f7f0663");
 
-      agents.push(new Agent(ws as any, "rsa-public-key"));
+      agents.push(new Agent(ws as any, "rsa-public-key", server));
 
       const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
 
@@ -248,9 +248,9 @@ describe("TunnelServer", () => {
         await agentSocket;
 
         const agent = server.agents.get(clusterId)?.[0];
-        const client: WebSocket = (agent as any).clients[0];
+        const client: Client = (agent as any).clients[0];
 
-        client.emit("error", new Error());
+        client.socket.emit("error", new Error());
 
         ws.close();
       });
@@ -321,6 +321,216 @@ describe("TunnelServer", () => {
 
         await expect(connect()).rejects.toBe("4404");
       });
+    });
+
+    describe("client presence socket", () => {
+      it("accepts client connection if agent is connected", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, 50);
+
+        await sleep(10);
+
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${jwtToken}`
+          }, 10, true, "presence");
+        };
+
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
+
+        await agent;
+      });
+
+      it("disconnects client connection if token is not signed by IdP", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, 50);
+
+        await sleep(10);
+
+        const invalidToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoiIn0.-6lOaGEVNaq-sxg-NlMMfmE7VQ-KPEqgnIgjUAFVMfQ";
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${invalidToken}`
+          }, 10, true, "presence");
+        };
+
+        await expect(connect()).rejects.toBe("4403");
+
+        await agent;
+      });
+
+      it("disconnects client connection if token audience doesn't match cluster address", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, 50);
+
+        await sleep(10);
+
+        // { "aud": "wrong_audience" }
+        const invalidToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsZW5zLXVzZXIiLCJncm91cHMiOlsiZGV2Il0sImlhdCI6MTUxNjIzOTAyMiwiYXVkIjoid3JvbmdfYXVkaWVuY2UifQ.MjFrCg2a53pBdZg3xXgnC2zvvynExk_ybDq44logg_C7kHseWH7SFxeHjFLF_ID5ifZaT6d2lhYSH1O3MpOdohdYPSIQ8WrIi8PGy743K52smyURK41G1BkVOVfr8x4kRARVav0JGaWn4RYNlvyiGIyPAo4_CmmUOC7sv93AGF_HF5wXVUO7gpSayFP_pFEUnUe9L7zwqE9QbGqb0KKzOgORbeHbSe49gaeezUu-8F-CiZcnh_3O2bUFK3GBzmYuMlG3cMBE-C5UZmEaQfteGwB7_h5rb9j53SspUmUl7ukWe4D3xsqglgcSxnI3bo0nY09gEQvQZyXNwAkNjeClGA";
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${invalidToken}`
+          }, 10, true, "presence");
+        };
+
+        await expect(connect()).rejects.toBe("4403");
+
+        await agent;
+      });
+
+      it("does not disconnect client if agent is disconnected", async () => {
+        const agent = incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, 50);
+
+        await sleep(10);
+
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${jwtToken}`
+          }, 200, true, "presence");
+        };
+
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
+
+        await agent;
+      });
+
+      it("handles client connection gracefully if agent is not connected", async () => {
+        const connect = () => {
+          return incomingSocket("client", {
+            "Authorization": `Bearer ${jwtToken}`
+          }, 10, true, "presence");
+        };
+
+        await expect(connect()).resolves.toHaveProperty("connection", "open");
+      });
+
+      it("sends empty presence json to client presence socket when socket is open", async () => {
+        expect.assertions(1);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        presence.ws.onmessage = (message) => {
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+              "userIds" : []
+            }
+          })
+          );
+        };
+
+        await sleep(200); //waits until first message was sent
+
+        presence.ws.close();
+      });
+
+
+      it("sends presence json to client presence socket when socket is open and clients are already connected", async () => {
+        expect.assertions(1);
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        presence.ws.onmessage = (message) => {
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+              "userIds" : ["lens-user"]
+            }
+          })
+          );
+        };
+
+        await sleep(200); //waits until first message was sent
+
+        presence.ws.close();
+        client.ws.close();
+        agent.ws.close();
+      });
+
+      it("sends userIds per agent to client presence socket after agent and client connected", async () => {
+        expect.assertions(1);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        await sleep(200); //waits until first message was sent
+
+        presence.ws.onmessage = (message) => {
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+              "userIds" : ["lens-user"]
+            }
+          })
+          );
+        };
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        await sleep(100); //waits until ClientConnected message was sent
+
+        presence.ws.close();
+        client.ws.close();
+        agent.ws.close();
+      });
+
+      it("sends empty presence json to client presence socket after agent and client connected and disconnected", async () => {
+        expect.assertions(1);
+
+        const presence = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false, "presence");
+                
+        await sleep(200); //waits until first message was sent
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        presence.ws.onmessage = (message) => {
+          console.log(message.data);
+          expect(message.data).toBe(JSON.stringify({ 
+            "presence" : {        
+              "userIds" : []
+            }
+          })
+          );
+        };
+
+        agent.ws.close();
+        client.ws.close();
+
+        await sleep(200); //waits until ClientDisconnected message was received
+    
+        presence.ws.close();
+      });
+
+      
     });
   });
 });
