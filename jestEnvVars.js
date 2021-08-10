@@ -1,0 +1,1 @@
+process.env.WS_FIRST_MESSAGE_DELAY=50;
