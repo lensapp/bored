@@ -82,6 +82,8 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
     return;
   }
 
+  console.log("SERVER: client listening to user presence socket");
+
   setTimeout(function() {
     sendPresenceData(socket, server, clusterId);
   }, 50);

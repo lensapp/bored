@@ -255,6 +255,25 @@ describe("TunnelServer", () => {
         ws.close();
       });
 
+      it("ensures ClientConnected event", async () => {
+        const callback = jest.fn();
+
+        server.on("ClientConnected", () => callback());
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        expect(callback).toBeCalledTimes(1);
+
+        client.ws.close();
+        agent.ws.close();
+      });
+
       it("disconnects client connection if token is not signed by IdP", async () => {
         const agent = incomingSocket("agent", {
           "Authorization": `Bearer ${agentJwtToken}`
@@ -415,10 +434,10 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         presence.ws.onmessage = (message) => {
-          expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+          expect(message.data).toBe(JSON.stringify({
+            "presence" : {
               "userIds" : []
             }
           })
@@ -445,10 +464,10 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : ["lens-user"]
             }
           })
@@ -468,12 +487,12 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         await sleep(200); //waits until first message was sent
 
         presence.ws.onmessage = (message) => {
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : ["lens-user"]
             }
           })
@@ -488,7 +507,7 @@ describe("TunnelServer", () => {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false);
 
-        await sleep(100); //waits until ClientConnected message was sent
+        await sleep(100); //waits until on "ClientConnected" message was sent
 
         presence.ws.close();
         client.ws.close();
@@ -501,7 +520,7 @@ describe("TunnelServer", () => {
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
-                
+
         await sleep(200); //waits until first message was sent
 
         const agent = await incomingSocket("agent", {
@@ -515,7 +534,7 @@ describe("TunnelServer", () => {
         presence.ws.onmessage = (message) => {
           console.log(message.data);
           expect(message.data).toBe(JSON.stringify({ 
-            "presence" : {        
+            "presence" : {
               "userIds" : []
             }
           })
@@ -525,12 +544,10 @@ describe("TunnelServer", () => {
         agent.ws.close();
         client.ws.close();
 
-        await sleep(200); //waits until ClientDisconnected message was received
-    
+        await sleep(200); //waits until on "ClientDisconnected" message was received
+
         presence.ws.close();
       });
-
-      
     });
   });
 });
