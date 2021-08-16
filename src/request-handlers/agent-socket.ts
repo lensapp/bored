@@ -50,7 +50,7 @@ export function handleAgentSocket(req: IncomingMessage, socket: WebSocket, serve
 
   console.log(`SERVER: agent connected. Cluster id: ${clusterId}`);
   const publicKey = Buffer.from(req.headers["x-bored-publickey"]?.toString() || "", "base64").toString("utf-8");
-  const agent = new Agent(socket, publicKey, server);
+  const agent = new Agent(socket, publicKey, server, clusterId);
 
   agents.push(agent);
 

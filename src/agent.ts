@@ -11,14 +11,16 @@ export interface Client {
 export class Agent {
   public socket: WebSocket;
   public publicKey: string;
+  public clusterId: string;
   public clients: Client[] = [];
   private mplex: BoredMplexClient;
   private server: TunnelServer;
 
-  constructor(socket: WebSocket, publicKey: string, server: TunnelServer) {
+  constructor(socket: WebSocket, publicKey: string, server: TunnelServer, clusterId: string) {
     this.socket = socket;
     this.publicKey = publicKey;
     this.server = server;
+    this.clusterId = clusterId;
 
     const stream = WebSocket.createWebSocketStream(this.socket);
 
@@ -77,7 +79,7 @@ export class Agent {
       this.removeClient(socket);
     });
 
-    this.server.emit("ClientConnected", {});
+    this.server.emit("ClientConnected", this.clusterId);
   }
 
   removeClient(socket: WebSocket) {
@@ -91,7 +93,7 @@ export class Agent {
 
     client.socket.close(4410);
 
-    this.server.emit("ClientDisconnected", {});
+    this.server.emit("ClientDisconnected", this.clusterId);
     console.log("SERVER: client disconnected");
   }
 

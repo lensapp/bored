@@ -26,7 +26,7 @@ export function handleClientSocket(req: IncomingMessage, socket: WebSocket, serv
 
   try {
     const tokenData = verifyClientToken(authorization.token, server);
-    
+
     userId = tokenData.sub;
     clusterId = server.agentToken === "" ? tokenData.clusterId : defaultClusterId;
   } catch (error) {
@@ -82,29 +82,20 @@ export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSock
     return;
   }
 
+  const presenceSockets = server.getPresenceSocketsForClusterId(clusterId);
+
+  presenceSockets.push(socket);
+  socket.on("close", () => {
+    const index = presenceSockets.findIndex((presence) => presence === socket);
+
+    if (index !== -1) {
+      presenceSockets.splice(index, 1);
+    }
+  });
+
   console.log("SERVER: client listening to user presence socket");
 
   setTimeout(function() {
-    sendPresenceData(socket, server, clusterId);
+    server.sendPresenceData(socket, clusterId);
   }, firstMessageDelay);
-
-  server.on("ClientConnected", () => {
-    sendPresenceData(socket, server, clusterId);
-  });
-
-  server.on("ClientDisconnected", () => {
-    sendPresenceData(socket, server, clusterId);
-  });
-}
-
-function sendPresenceData(socket: WebSocket, server: TunnelServer, clusterId: string) {
-  const agents = server.getAgentsForClusterId(clusterId);
-
-  socket.send(
-    JSON.stringify({
-      "presence" : {
-        "userIds": agents.flatMap(agent => agent.clients.map(client => client.userId))
-      } 
-    })
-  );
 }

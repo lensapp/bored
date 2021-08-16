@@ -10,9 +10,8 @@ import { EventEmitter } from "events";
 
 export type ClusterId = string;
 export const defaultClusterId: ClusterId = "default";
-const eventEmitter = new EventEmitter();
 
-export class TunnelServer {
+export class TunnelServer extends EventEmitter {
   private server?: HttpServer;
   private ws?: Server;
 
@@ -20,9 +19,23 @@ export class TunnelServer {
   public idpPublicKey = "";
   public tunnelAddress?: string;
   public agents: Map<ClusterId, Agent[]> = new Map();
-  emit = eventEmitter.emit;
-  on = eventEmitter.on;
-  off = eventEmitter.off;
+  public presenceSockets: Map<ClusterId, WebSocket[]> = new Map();
+
+  constructor() {
+    super();
+
+    this.on("ClientConnected", (clusterId: string) => {
+      this.getPresenceSocketsForClusterId(clusterId).forEach((socket) => {
+        this.sendPresenceData(socket, clusterId);
+      });
+    });
+
+    this.on("ClientDisconnected", (clusterId: string) => {
+      this.getPresenceSocketsForClusterId(clusterId).forEach((socket) => {
+        this.sendPresenceData(socket, clusterId);
+      });
+    });
+  }
 
   start(port = 8080, agentToken: string, idpPublicKey: string, tunnelAddress = process.env.TUNNEL_ADDRESS || ""): Promise<void> {
     this.agentToken = agentToken;
@@ -59,6 +72,14 @@ export class TunnelServer {
     if (!this.agents.has(clusterId)) this.agents.set(clusterId, agents);
 
     return agents;
+  }
+
+  getPresenceSocketsForClusterId(clusterId: string) {
+    const sockets = this.presenceSockets.get(clusterId) || [];
+
+    if (!this.presenceSockets.has(clusterId)) this.presenceSockets.set(clusterId, sockets);
+
+    return sockets;
   }
 
   handleRequest(req: IncomingMessage, res: ServerResponse) {
@@ -125,5 +146,17 @@ export class TunnelServer {
         handleClientPresenceSocket(req, socket, this, parseInt(process.env.WS_FIRST_MESSAGE_DELAY || ""));
       });
     }
+  }
+
+  sendPresenceData(socket: WebSocket, clusterId: string) {
+    const agents = this.getAgentsForClusterId(clusterId);
+
+    socket.send(
+      JSON.stringify({
+        "presence" : {
+          "userIds": agents.flatMap(agent => agent.clients.map(client => client.userId))
+        }
+      })
+    );
   }
 }
