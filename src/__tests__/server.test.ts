@@ -274,6 +274,29 @@ describe("TunnelServer", () => {
         agent.ws.close();
       });
 
+
+      it("ensures ClientDisconnected event", async () => {
+        const callback = jest.fn();
+
+        server.on("ClientDisconnected", () => callback());
+
+        const agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        const client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
+        client.ws.close();
+
+        await sleep(50);
+
+        expect(callback).toBeCalledTimes(1);
+
+        agent.ws.close();
+      });
+
       it("disconnects client connection if token is not signed by IdP", async () => {
         const agent = incomingSocket("agent", {
           "Authorization": `Bearer ${agentJwtToken}`

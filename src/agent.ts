@@ -73,6 +73,10 @@ export class Agent {
       socket.close(4410);
     });
 
+    socket.on("close", () => {
+      this.removeClient(socket);
+    });
+
     this.server.emit("ClientConnected", {});
   }
 
@@ -88,6 +92,7 @@ export class Agent {
     client.socket.close(4410);
 
     this.server.emit("ClientDisconnected", {});
+    console.log("SERVER: client disconnected");
   }
 
   openStream() {
