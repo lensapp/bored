@@ -29,6 +29,6 @@
     "@sentry/node": "^6.11.0",
     "bored-mplex": "^0.0.17",
     "jsonwebtoken": "^8.5.1",
-    "ws": "^7.4.6"
+    "ws": "^8.2.0"
   }
 }
