@@ -1865,10 +1865,10 @@ escodegen@^1.14.1:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-plugin-unused-imports@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-unused-imports/-/eslint-plugin-unused-imports-1.1.2.tgz#de94bbf744183c0deb4a20aa5a358cd85ce28832"
-  integrity sha512-dfiCZiv/lSkOp6/JIjP+ASIs1vxLgiN1NISM+oxcO799+FEZQXy0Se1CaAHQt4BCInBOJ9LK0ILCe1lMMI+YGA==
+eslint-plugin-unused-imports@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-unused-imports/-/eslint-plugin-unused-imports-1.1.4.tgz#f43a5ba9ebbb5b6325923523ee7c29e9b33d2b6e"
+  integrity sha512-6M9iqqZbnsLdcpYm8ZAyjHHxw1Gmv/pK8yK9Za/cfrKKkOyxaXmiw5/EtBXPcp/JJ6Ge9ur+OROSAcYho45smA==
   dependencies:
     eslint-rule-composer "^0.3.0"
 
