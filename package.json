@@ -11,7 +11,7 @@
     "lint": "yarn run eslint --ext js,ts --max-warnings=0 ."
   },
   "devDependencies": {
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^27.0.1",
     "@types/jsonwebtoken": "^8.5.4",
     "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
