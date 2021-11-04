@@ -519,6 +519,14 @@ describe("TunnelServer", () => {
         let agent: IncomingSocket | null = null;
         let client: IncomingSocket | null = null;
 
+        agent = await incomingSocket("agent", {
+          "Authorization": `Bearer ${agentJwtToken}`
+        }, undefined, false);
+
+        client = await incomingSocket("client", {
+          "Authorization": `Bearer ${jwtToken}`
+        }, undefined, false);
+
         const testPromise = new Promise((resolve) => {
           presence.ws.onmessage = (message) => {
             expect(message.data).toBe(JSON.stringify({
@@ -534,14 +542,6 @@ describe("TunnelServer", () => {
             resolve(true);
           };
         });
-
-        agent = await incomingSocket("agent", {
-          "Authorization": `Bearer ${agentJwtToken}`
-        }, undefined, false);
-
-        client = await incomingSocket("client", {
-          "Authorization": `Bearer ${jwtToken}`
-        }, undefined, false);
 
         await testPromise;
       });
