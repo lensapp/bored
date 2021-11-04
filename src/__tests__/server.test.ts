@@ -453,26 +453,28 @@ describe("TunnelServer", () => {
         await expect(connect()).resolves.toHaveProperty("connection", "open");
       });
 
-      it("sends empty presence json to client presence socket when socket is open", async (done) => {
+      it("sends empty presence json to client presence socket when socket is open", async () => {
         expect.assertions(1);
 
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
 
-        presence.ws.onmessage = (message) => {
-          expect(message.data).toBe(JSON.stringify({
-            "presence" : {
-              "userIds" : []
-            }
-          }));
-          presence.ws.close();
-          done();
-        };
+        await new Promise((resolve) => {
+          presence.ws.onmessage = (message) => {
+            expect(message.data).toBe(JSON.stringify({
+              "presence" : {
+                "userIds" : []
+              }
+            }));
+            presence.ws.close();
+            resolve(true);
+          };
+        });
       });
 
 
-      it("sends presence json to client presence socket when socket is open and clients are already connected", async (done) => {
+      it("sends presence json to client presence socket when socket is open and clients are already connected", async () => {
         expect.assertions(1);
 
         const agent = await incomingSocket("agent", {
@@ -487,48 +489,51 @@ describe("TunnelServer", () => {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
 
-        presence.ws.onmessage = (message) => {
-          expect(message.data).toBe(JSON.stringify({
-            "presence" : {
-              "userIds" : ["lens-user"]
-            }
-          })
-          );
+        await new Promise((resolve) => {
+          presence.ws.onmessage = (message) => {
+            expect(message.data).toBe(JSON.stringify({
+              "presence" : {
+                "userIds" : ["lens-user"]
+              }
+            })
+            );
 
-          presence.ws.close();
-          client.ws.close();
-          agent.ws.close();
+            presence.ws.close();
+            client.ws.close();
+            agent.ws.close();
 
-          done();
-        };
+            resolve(true);
+          };
+        });
       });
 
-      it("sends userIds per agent to client presence socket after agent and client connected", async (done) => {
+      it("sends userIds per agent to client presence socket after agent and client connected", async () => {
         expect.assertions(1);
 
         const presence = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false, "presence");
 
-        await sleep(200); //waits until first message was sent
+        //await sleep(200); //waits until first message was sent
 
         let agent: IncomingSocket | null = null;
         let client: IncomingSocket | null = null;
 
-        presence.ws.onmessage = (message) => {
-          console.log("message", message.data);
-          expect(message.data).toBe(JSON.stringify({
-            "presence" : {
-              "userIds" : ["lens-user"]
-            }
-          }));
+        const testPromise = new Promise((resolve) => {
+          presence.ws.onmessage = (message) => {
+            expect(message.data).toBe(JSON.stringify({
+              "presence" : {
+                "userIds" : ["lens-user"]
+              }
+            }));
 
-          presence.ws.close();
-          client?.ws.close();
-          agent?.ws.close();
+            presence.ws.close();
+            client?.ws.close();
+            agent?.ws.close();
 
-          done();
-        };
+            resolve(true);
+          };
+        });
 
         agent = await incomingSocket("agent", {
           "Authorization": `Bearer ${agentJwtToken}`
@@ -537,9 +542,11 @@ describe("TunnelServer", () => {
         client = await incomingSocket("client", {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false);
+
+        await testPromise;
       });
 
-      it("sends empty presence json to client presence socket after agent and client connected and disconnected", async (done) => {
+      it("sends empty presence json to client presence socket after agent and client connected and disconnected", async () => {
         expect.assertions(1);
 
         const presence = await incomingSocket("client", {
@@ -556,19 +563,23 @@ describe("TunnelServer", () => {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false);
 
-        presence.ws.onmessage = (message) => {
-          expect(message.data).toBe(JSON.stringify({
-            "presence" : {
-              "userIds" : []
-            }
-          }));
+        const testPromise = new Promise((resolve) => {
+          presence.ws.onmessage = (message) => {
+            expect(message.data).toBe(JSON.stringify({
+              "presence" : {
+                "userIds" : []
+              }
+            }));
 
-          presence.ws.close();
-          done();
-        };
+            presence.ws.close();
+            resolve(true);
+          };
+        });
 
         agent.ws.close();
         client.ws.close();
+
+        await testPromise;
       });
     });
   });
