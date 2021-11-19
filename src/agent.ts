@@ -8,6 +8,14 @@ export interface Client {
   userId: string;
 }
 
+export interface AgentOpts {
+  socket: WebSocket;
+  publicKey: string;
+  server: TunnelServer;
+  clusterId: string,
+  keepalive: number
+}
+
 export class Agent {
   public socket: WebSocket;
   public publicKey: string;
@@ -16,7 +24,9 @@ export class Agent {
   private mplex: BoredMplexClient;
   private server: TunnelServer;
 
-  constructor(socket: WebSocket, publicKey: string, server: TunnelServer, clusterId: string) {
+  constructor(opts: AgentOpts) {
+    const { socket, publicKey, server, clusterId, keepalive } = opts;
+
     this.socket = socket;
     this.publicKey = publicKey;
     this.server = server;
@@ -25,9 +35,15 @@ export class Agent {
     const stream = WebSocket.createWebSocketStream(this.socket);
 
     this.mplex = new BoredMplexClient();
+
+    if (keepalive) {
+      this.mplex.enableKeepAlive(keepalive);
+    }
+
     this.mplex.pipe(stream).pipe(this.mplex);
 
     this.socket.on("close", () => {
+      this.mplex.disableKeepAlive();
       this.clients.forEach((client) => this.removeClient(client.socket));
     });
 
