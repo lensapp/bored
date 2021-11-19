@@ -20,6 +20,7 @@ export class TunnelServer extends EventEmitter {
   public tunnelAddress?: string;
   public agents: Map<ClusterId, Agent[]> = new Map();
   public presenceSockets: Map<ClusterId, WebSocket[]> = new Map();
+  public keepAlive = 10_000;
 
   constructor() {
     super();
@@ -35,6 +36,14 @@ export class TunnelServer extends EventEmitter {
         this.sendPresenceData(socket, clusterId);
       });
     });
+  }
+
+  enableKeepAlive(keepAliveTimeMs: number) {
+    this.keepAlive = keepAliveTimeMs;
+  }
+
+  disableKeepAlive() {
+    this.keepAlive = 0;
   }
 
   start(port = 8080, agentToken: string, idpPublicKey: string, tunnelAddress = process.env.TUNNEL_ADDRESS || ""): Promise<void> {

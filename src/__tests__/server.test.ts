@@ -50,6 +50,7 @@ describe("TunnelServer", () => {
 
   beforeEach(async () => {
     server = new TunnelServer();
+    server.disableKeepAlive();
     await server.start(port, "", idpPublicKey, tunnelAddress);
   });
 
@@ -124,7 +125,7 @@ describe("TunnelServer", () => {
 
       const agents = server.getAgentsForClusterId("a026e50d-f9b4-4aa8-ba02-c9722f7f0663");
 
-      agents.push(new Agent(ws as any, "rsa-public-key", server, "test-id"));
+      agents.push(new Agent({ socket: ws as any, publicKey: "rsa-public-key", server, clusterId: "test-id", keepalive: 0 }));
 
       const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
 

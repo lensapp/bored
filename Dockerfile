@@ -4,7 +4,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY . /app
-RUN apk add --update python gcc g++ make && \
+RUN apk add --update python3 gcc g++ make && \
     yarn install --frozen-lockfile && \
     yarn dist && \
     yarn install --frozen-lockfile --prod
