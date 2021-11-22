@@ -2,6 +2,7 @@ import { TunnelServer } from "./src/server";
 import { version } from "./package.json";
 import { captureException, initExceptionHandler } from "./src/error-reporter";
 
+process.title = "bored";
 console.log(`~~ BoreD v${version} ~~`);
 
 initExceptionHandler();
