@@ -1,0 +1,101 @@
+version: v1beta11
+
+# `vars` specifies variables which may be used as ${VAR_NAME} in devspace.yaml
+vars:
+- name: IMAGE
+  value: bored
+
+# `deployments` tells DevSpace how to deploy this project
+images:
+  catalog-api-autoscaler:
+    image: trow.${DEVSPACE_NAMESPACE}.svc.cluster.local:8000/${IMAGE}
+    tags:
+      - latest
+    build:
+      kaniko:
+        insecure: true
+deployments:
+- name: helpers
+  kubectl:
+    manifests:
+    - devspace/
+- name: lens-space-proxy
+  # This deployment uses `helm` but you can also define `kubectl` deployments or kustomizations
+  helm:
+    # We are deploying the so-called Component Chart: https://devspace.sh/component-chart/docs
+    componentChart: true
+    # Under `values` we can define the values for this Helm chart used during `helm install/upgrade`
+    # You may also use `valuesFiles` to load values from files, e.g. valuesFiles: ["values.yaml"]
+    values:
+      containers:
+      - image: localhost:30999/${IMAGE} # Use the value of our `${IMAGE}` variable here (see vars above)
+        env:
+        - name: IDP_PUBLIC_KEY
+          value: |
+            -----BEGIN PUBLIC KEY-----
+            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv
+            vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc
+            aT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy
+            tvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0
+            e+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb
+            V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9
+            MwIDAQAB
+            -----END PUBLIC KEY-----
+
+# `dev` only applies when you run `devspace dev`
+dev:
+  # `dev.sync` configures a file sync between our Pods in k8s and your local project files
+  sync:
+  - imageSelector: ${IMAGE} # Select the Pod that runs our `${IMAGE}`
+    excludePaths:
+    - .git/
+    uploadExcludePaths:
+    - node_modules
+    - example
+    - .devspace
+
+  # `dev.terminal` tells DevSpace to open a terminal as a last step during `devspace dev`
+  terminal:
+    imageSelector: ${IMAGE} # Select the Pod that runs our `${IMAGE}`
+    # With this optional `command` we can tell DevSpace to run a script when opening the terminal
+    # This is often useful to display help info for new users or perform initial tasks (e.g. installing dependencies)
+    # DevSpace has generated an example ./devspace_start.sh file in your local project - Feel free to customize it!
+    command:
+    - ./devspace_start.sh
+
+  # Since our Helm charts and manifests deployments are often optimized for production,
+  # DevSpace let's you swap out Pods dynamically to get a better dev environment
+  replacePods:
+  - imageSelector: ${IMAGE} # Select the Pod that runs our `${IMAGE}`
+    # Since the `${IMAGE}` used to start our main application pod may be distroless or not have any dev tooling, let's replace it with a dev-optimized image
+    # DevSpace provides a sample image here but you can use any image for your specific needs
+    replaceImage: loftsh/alpine:latest
+    # Besides replacing the container image, let's also apply some patches to the `spec` of our Pod
+    # We are overwriting `command` + `args` for the first container in our selected Pod, so it starts with `sleep 9999999`
+    # Using `sleep 9999999` as PID 1 (instead of the regular ENTRYPOINT), allows you to start the application manually
+    patches:
+    - op: replace
+      path: spec.containers[0].command
+      value:
+      - sleep
+    - op: replace
+      path: spec.containers[0].args
+      value:
+      - "9999999"
+    - op: remove
+      path: spec.containers[0].securityContext
+hooks:
+- name: registry
+  command: "helm get notes trow > /dev/null || helm upgrade trow trow --namespace ${DEVSPACE_NAMESPACE} --install --repo https://trow.io"
+  events: ["before:build"]
+# `profiles` lets you modify the config above for different environments (e.g. dev vs production)
+profiles:
+  # This profile is called `production` and you can use it for example using: devspace deploy -p production
+  # We generally recommend to use the base config without any profiles as optimized for development (e.g. image build+push is disabled)
+- name: production
+# This profile adds our image to the config so that DevSpace will build, tag and push our image before the deployment
+  merge:
+    images:
+      app:
+        image: ${IMAGE} # Use the value of our `${IMAGE}` variable here (see vars above)
+        dockerfile: ./Dockerfile
