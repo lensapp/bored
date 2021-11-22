@@ -1,6 +1,6 @@
 {
   "name": "bored",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
