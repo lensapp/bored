@@ -4,25 +4,37 @@ import { TunnelServer } from "../server";
 import { parseAuthorization, verifyClientToken } from "../util";
 
 export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse, server: TunnelServer) {
-  const authorization = parseAuthorization(req?.headers?.authorization);
+  const url = new URL(req.url || "/", "http://localhost");
+  let clusterId = url.searchParams.get("clusterId");
 
-  if (!authorization || !authorization.token) {
-    res.writeHead(403);
-    res.end();
+  if (!clusterId) {
+    const authorization = parseAuthorization(req?.headers?.authorization);
 
-    return;
+    if (!authorization || !authorization.token) {
+      res.writeHead(403);
+      res.end();
+
+      return;
+    }
+
+    try {
+      const tokenData = verifyClientToken(authorization?.token, server);
+      
+      clusterId = tokenData.clusterId;
+    } catch(error) {
+      res.writeHead(403);
+      res.end();
+    }
   }
 
-  try {
-    const tokenData = verifyClientToken(authorization?.token, server);
-    const agents = server.getAgentsForClusterId(tokenData.clusterId);
+  if (clusterId) {
+    const agents = server.getAgentsForClusterId(clusterId);
 
-    respondWithAgentPublicKey(res, agents, tokenData.clusterId);
-  } catch(error) {
-    res.writeHead(403);
+    respondWithAgentPublicKey(res, agents, clusterId);
+  } else {
+    res.writeHead(404);
     res.end();
   }
-
 
   return;
 }

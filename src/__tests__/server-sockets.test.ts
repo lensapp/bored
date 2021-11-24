@@ -1,6 +1,5 @@
 import { TunnelServer } from "../server";
-import got, { Headers } from "got";
-import { Agent, Client } from "../agent";
+import { Client } from "../agent";
 import WebSocket from "ws";
 
 // jwt.io public key, new tokens can be created in https://jwt.io/
@@ -59,7 +58,6 @@ describe("TunnelServer", () => {
   });
 
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
-  const get = async (path: string, headers?: Headers) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false, headers });
 
   const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect"): Promise<IncomingSocket> => {
     return new Promise((resolve, reject) => {
@@ -89,68 +87,6 @@ describe("TunnelServer", () => {
       });
     });
   };
-
-  describe("http endpoints", () => {
-    it("responds 200 on /", async () => {
-      const res = await get("/");
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toBe("BoreD");
-    });
-
-    it("responds 404 on invalid path", async () => {
-      const res = await get("/does-not-exist");
-
-      expect(res.statusCode).toBe(404);
-    });
-
-    it("responds 200 on /healthz", async () => {
-      const res = await get("/healthz");
-
-      expect(res.statusCode).toBe(200);
-    });
-
-    it("responds 200 on /.well-known/public_key without bearer token", async () => {
-      const res = await get("/.well-known/public_key");
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toBe(idpPublicKey);
-    });
-
-    it("responds 200 on /client/public-key with token if agent is connected", async () => {
-      const ws = {
-        once: jest.fn(),
-        on: jest.fn()
-      };
-
-      const agents = server.getAgentsForClusterId("a026e50d-f9b4-4aa8-ba02-c9722f7f0663");
-
-      agents.push(new Agent({ socket: ws as any, publicKey: "rsa-public-key", server, clusterId: "test-id", keepalive: 0 }));
-
-      const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toBe("rsa-public-key");
-    });
-
-    it("responds 403 on /client/public-key without token if agent is not connected", async () => {
-      const res = await get("/client/public-key");
-
-      expect(res.statusCode).toBe(403);
-    });
-
-    it("responds 404 on /client/public-key with token if agent is not connected", async () => {
-      const res = await get("/client/public-key", { "Authorization": `Bearer ${jwtToken}`});
-
-      expect(res.statusCode).toBe(404);
-    });
-
-    it("responds 403 on /client/public-key with invalid token", async () => {
-      const res = await get("/client/public-key", { "Authorization": `Bearer this.is.invalid`});
-
-      expect(res.statusCode).toBe(403);
-    });
-  });
 
   describe("websockets", () => {
     describe("agent socket", () => {
