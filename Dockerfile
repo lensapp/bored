@@ -11,12 +11,14 @@ RUN apk add --update python3 gcc g++ make && \
 
 FROM node:14-alpine
 
-RUN mkdir /app
+RUN mkdir /app \
+  && addgroup -S bored && adduser -S bored -G bored
 WORKDIR /app
 
 COPY package.json yarn.lock ./
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 
+USER bored
 ENTRYPOINT [ "/usr/local/bin/node" ]
 CMD ["/app/dist/index.js"]
