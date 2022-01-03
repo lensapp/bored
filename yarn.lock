@@ -658,9 +658,9 @@
   version "7.0.8"
   resolved "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.8.tgz"
 
-"@types/jsonwebtoken@^8.5.5":
-  version "8.5.5"
-  resolved "https://registry.npmjs.org/@types/jsonwebtoken/-/jsonwebtoken-8.5.5.tgz"
+"@types/jsonwebtoken@^8.5.6":
+  version "8.5.6"
+  resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-8.5.6.tgz#1913e5a61e70a192c5a444623da4901a7b1a9d42"
   dependencies:
     "@types/node" "*"
 
@@ -2192,18 +2192,7 @@ jest-snapshot@^27.4.5:
     pretty-format "^27.4.2"
     semver "^7.3.2"
 
-jest-util@^27.0.0:
-  version "27.3.1"
-  resolved "https://registry.npmjs.org/jest-util/-/jest-util-27.3.1.tgz"
-  dependencies:
-    "@jest/types" "^27.2.5"
-    "@types/node" "*"
-    chalk "^4.0.0"
-    ci-info "^3.2.0"
-    graceful-fs "^4.2.4"
-    picomatch "^2.2.3"
-
-jest-util@^27.4.2:
+jest-util@^27.0.0, jest-util@^27.4.2:
   version "27.4.2"
   resolved "https://registry.yarnpkg.com/jest-util/-/jest-util-27.4.2.tgz#ed95b05b1adfd761e2cda47e0144c6a58e05a621"
   dependencies:
@@ -3040,9 +3029,9 @@ tree-kill@^1.2.2:
   version "1.2.2"
   resolved "https://registry.npmjs.org/tree-kill/-/tree-kill-1.2.2.tgz"
 
-ts-jest@^27.0.7:
-  version "27.0.7"
-  resolved "https://registry.npmjs.org/ts-jest/-/ts-jest-27.0.7.tgz"
+ts-jest@^27.1.2:
+  version "27.1.2"
+  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-27.1.2.tgz#5991d6eb3fd8e1a8d4b8f6de3ec0a3cc567f3151"
   dependencies:
     bs-logger "0.x"
     fast-json-stable-stringify "2.x"
