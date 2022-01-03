@@ -20,7 +20,7 @@
     "eslint-plugin-unused-imports": "^1.1.5",
     "got": "^11.8.2",
     "jest": "^27.4.5",
-    "ts-jest": "^27.0.7",
+    "ts-jest": "^27.1.2",
     "ts-node": "^9.1.1",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.5.4"
