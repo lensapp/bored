@@ -979,9 +979,10 @@ binary-extensions@^2.0.0:
   version "2.2.0"
   resolved "https://registry.npmjs.org/binary-extensions/-/binary-extensions-2.2.0.tgz"
 
-bored-mplex@^0.0.17:
-  version "0.0.17"
-  resolved "https://registry.npmjs.org/bored-mplex/-/bored-mplex-0.0.17.tgz"
+bored-mplex@^0.0.20:
+  version "0.0.20"
+  resolved "https://registry.yarnpkg.com/bored-mplex/-/bored-mplex-0.0.20.tgz#8f64ad23d605751a1ca2ff3e07d5e808c27962ef"
+  integrity sha512-1kzzE6qe8ugO8RVswgzZue28YtZBMlpY/J0XICQmYr/h0RxIn76ZtMVWDF0drVfdISyw49nFqphQ2v5DagpKIA==
   dependencies:
     msgpackr "1.2.9"
 
