@@ -63,8 +63,8 @@ export class Agent {
   addClient(socket: WebSocket, userId: string) {
     this.clients.push({ socket, userId });
 
-    const mplex = new BoredMplex((stream) => {
-      const agentStream = this.openStream();
+    const mplex = new BoredMplex((stream, data) => {
+      const agentStream = this.openStream(data);
 
       stream.pipe(agentStream);
       agentStream.pipe(stream);
@@ -113,7 +113,7 @@ export class Agent {
     console.log("SERVER: client disconnected");
   }
 
-  openStream() {
-    return this.mplex.openStream();
+  openStream(data?: Buffer) {
+    return this.mplex.openStream(data);
   }
 }
