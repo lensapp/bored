@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@sentry/node": "^6.15.0",
-    "bored-mplex": "^0.0.20",
+    "bored-mplex": "^0.1.2",
     "jsonwebtoken": "^8.5.1",
     "ws": "^7.5.6"
   }
