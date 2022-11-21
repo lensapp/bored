@@ -18,7 +18,7 @@
     "@typescript-eslint/parser": "^4.30.0",
     "eslint": "^7.32.0",
     "eslint-plugin-unused-imports": "^1.1.5",
-    "got": "11.8.5",
+    "got": "12.5.3",
     "jest": "^27.4.5",
     "ts-jest": "^27.1.2",
     "ts-node": "^9.1.1",
