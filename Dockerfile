@@ -1,4 +1,4 @@
-FROM node:16-alpine as build
+FROM node:20-alpine as build
 
 RUN mkdir /app
 WORKDIR /app
@@ -9,7 +9,7 @@ RUN apk add --update python3 gcc g++ make && \
     yarn dist && \
     yarn install --frozen-lockfile --prod
 
-FROM node:16-alpine
+FROM node:20-alpine
 
 RUN mkdir /app \
   && addgroup -S bored && adduser -S bored -G bored
