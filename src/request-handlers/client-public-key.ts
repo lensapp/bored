@@ -19,11 +19,13 @@ export function handleClientPublicKey(req: IncomingMessage, res: ServerResponse,
 
     try {
       const tokenData = verifyClientToken(authorization?.token, server);
-      
+
       clusterId = tokenData.clusterId;
     } catch(error) {
       res.writeHead(403);
       res.end();
+
+      return;
     }
   }
 
