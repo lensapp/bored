@@ -5,7 +5,10 @@ import { captureException, initExceptionHandler } from "./src/error-reporter";
 process.title = "bored";
 console.log(`~~ BoreD v${version} ~~`);
 
-initExceptionHandler();
+
+const tunnelAddress = process.env.TUNNEL_ADDRESS || "";
+
+initExceptionHandler(tunnelAddress);
 
 const serverPort = parseInt(process.env.PORT || "8080");
 const agentToken = process.env.AGENT_TOKEN || "";
@@ -35,4 +38,4 @@ process.once("SIGINT", () => {
   process.exit(0);
 });
 
-server.start(serverPort, agentToken, idpPublicKey);
+server.start(serverPort, agentToken, idpPublicKey, tunnelAddress);
