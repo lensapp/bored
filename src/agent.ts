@@ -50,7 +50,6 @@ export class Agent {
     stream.on("error", error => {
       console.error(error);
       this.clients.forEach((client) => this.removeClient(client.socket));
-      captureException(error);
     });
 
     this.mplex.on("error", error => {
