@@ -92,12 +92,15 @@ describe("TunnelServer", () => {
 
   describe("websockets", () => {
     describe.each(["connect", "presence"])("browser client %s", (endpoint) => {
-      it("authenticates without custom headers and never echoes the token", async () => {
+      it.each([
+        [`bored-auth.${jwtToken}`, "bored"],
+        ["json", "bored", `bored-auth.${jwtToken}`]
+      ])("authenticates without custom headers and negotiates bored (%s)", async (...protocols) => {
         const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, false);
 
         try {
-          // Put the credential first to ensure it cannot be selected by ws's default negotiation.
-          const client = await incomingSocket("client", {}, 10, true, endpoint, [`bored-auth.${jwtToken}`, "bored"]);
+          // Neither a credential nor an unrelated application protocol may be selected.
+          const client = await incomingSocket("client", {}, 10, true, endpoint, protocols);
 
           expect(client.connection).toBe("open");
           expect(client.ws.protocol).toBe("bored");
@@ -134,6 +137,12 @@ describe("TunnelServer", () => {
     });
 
     describe("agent socket", () => {
+      it("retains first-protocol negotiation without client credentials", async () => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, true, "connect", ["json", "bored"]);
+
+        expect(agent.ws.protocol).toBe("json");
+      });
+
       it("does not accept client subprotocol credentials for agents", async () => {
         await expect(incomingSocket("agent", {}, 10, true, "connect", ["bored", `bored-auth.${agentJwtToken}`])).rejects.toBe("4401");
       });

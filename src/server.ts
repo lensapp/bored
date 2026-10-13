@@ -55,7 +55,13 @@ export class TunnelServer extends EventEmitter {
     this.ws = new Server({
       noServer: true,
       // Never echo a bearer credential in the handshake response.
-      handleProtocols: (protocols: string[]) => protocols.find(protocol => !protocol.startsWith(clientAuthProtocolPrefix)) || false
+      handleProtocols: (protocols: string[]) => {
+        if (protocols.includes("bored") && protocols.some(protocol => protocol.startsWith(clientAuthProtocolPrefix))) {
+          return "bored";
+        }
+
+        return protocols.find(protocol => !protocol.startsWith(clientAuthProtocolPrefix)) || false;
+      }
     });
 
     this.server = createServer(this.handleRequest.bind(this));
