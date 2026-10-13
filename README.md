@@ -61,9 +61,14 @@ const socket = new WebSocket("wss://bored.domain.com/client/connect", [
 ```
 
 Offer exactly one `bored-auth.` credential together with `bored`. The server
-negotiates `bored`, never the credential. Use `wss://` and redact credential
+negotiates `bored`, never the credential. Omitting `bored` makes the handshake
+fail before an authentication close code can be received; the credential is never
+echoed to make an incomplete protocol offer succeed. Use `wss://` and redact credential
 subprotocols from infrastructure logs, just as for Authorization headers.
-Existing Authorization headers take precedence; agent authentication is unchanged.
+Bearer Authorization headers take precedence, including invalid or malformed
+Bearer credentials (which fail without fallback). Other schemes, such as cached
+HTTP Basic credentials forwarded by an ingress, do not override a subprotocol
+JWT. Agent authentication is unchanged.
 
 ## Encryption
 

@@ -124,8 +124,25 @@ describe("TunnelServer", () => {
         await expect(incomingSocket("client", {}, 10, true, endpoint, ["bored", `bored-auth.${credential}`])).rejects.toBe("4403");
       });
 
-      it("does not fall back from an invalid Authorization header", async () => {
-        await expect(incomingSocket("client", { Authorization: "Bearer invalid" }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`])).rejects.toBe("4403");
+      it.each(["Bearer invalid", "bEaReR invalid", "Bearer", "Bearer  invalid"])("does not fall back from an invalid Bearer header (%s)", async (header) => {
+        await expect(incomingSocket("client", { Authorization: header }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`])).rejects.toBe("4403");
+      });
+
+      it("accepts subprotocol credentials alongside a cached Basic header", async () => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, false);
+
+        try {
+          const client = await incomingSocket("client", { Authorization: "Basic dXNlcjpwYXNz" }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`]);
+
+          expect(client.connection).toBe("open");
+          expect(client.ws.protocol).toBe("bored");
+        } finally {
+          agent.ws.close();
+        }
+      });
+
+      it.each([[], ["bored", "bored-auth.invalid"]])("rejects Basic auth without a valid subprotocol JWT (%s)", async (...protocols) => {
+        await expect(incomingSocket("client", { Authorization: "Basic dXNlcjpwYXNz" }, 10, true, endpoint, protocols)).rejects.toBe("4403");
       });
 
       it.each([

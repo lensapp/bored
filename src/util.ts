@@ -33,18 +33,21 @@ export function parseAuthorization(authHeader?: string) {
 export const clientAuthProtocolPrefix = "bored-auth.";
 
 export function clientSocketAuthorization(req: IncomingMessage) {
-  if (req.headers.authorization !== undefined) {
-    return req.headers.authorization;
+  const header = req.headers.authorization;
+
+  // A malformed Bearer header must fail rather than fall back to another token.
+  if (header && /^bearer(?:\s|$)/i.test(header)) {
+    return parseAuthorization(header) || { type: "bearer", token: "" };
   }
 
   const protocols = req.headers["sec-websocket-protocol"]?.split(",").map(protocol => protocol.trim()) || [];
   const credentials = protocols.filter(protocol => protocol.startsWith(clientAuthProtocolPrefix));
 
   if (!protocols.includes("bored") || credentials.length !== 1) {
-    return undefined;
+    return parseAuthorization(header);
   }
 
-  return `Bearer ${credentials[0].slice(clientAuthProtocolPrefix.length)}`;
+  return { type: "bearer", token: credentials[0].slice(clientAuthProtocolPrefix.length) };
 }
 
 export function verifyClientToken(token: string, server: TunnelServer) {
