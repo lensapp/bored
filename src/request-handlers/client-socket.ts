@@ -1,17 +1,19 @@
 import { IncomingMessage } from "http";
 import WebSocket from "ws";
 import { defaultClusterId, TunnelServer } from "../server";
-import { parseAuthorization, verifyClientToken } from "../util";
+import { clientSocketAuthorization, parseAuthorization, verifyClientToken } from "../util";
 
 export function handleClientSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer) {
-  if (!req.headers.authorization) {
-    console.log("SERVER: client did not specify authorization header, closing connection.");
+  const authHeader = clientSocketAuthorization(req);
+
+  if (!authHeader) {
+    console.log("SERVER: client did not specify authorization, closing connection.");
     socket.close(4401);
 
     return;
   }
 
-  const authorization = parseAuthorization(req.headers.authorization);
+  const authorization = parseAuthorization(authHeader);
 
   if (authorization?.type !== "bearer") {
     console.log("SERVER: invalid client token, closing connection.");
@@ -52,14 +54,16 @@ export function handleClientSocket(req: IncomingMessage, socket: WebSocket, serv
 
 export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer, firstMessageDelay = 0) {
 
-  if (!req.headers.authorization) {
-    console.log("SERVER: client did not specify authorization header, closing connection.");
+  const authHeader = clientSocketAuthorization(req);
+
+  if (!authHeader) {
+    console.log("SERVER: client did not specify authorization, closing connection.");
     socket.close(4401);
 
     return;
   }
 
-  const authorization = parseAuthorization(req.headers.authorization);
+  const authorization = parseAuthorization(authHeader);
 
   if (authorization?.type !== "bearer") {
     console.log("SERVER: invalid client token, closing connection.");

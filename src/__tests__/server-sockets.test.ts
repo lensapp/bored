@@ -1,6 +1,8 @@
 import { TunnelServer } from "../server";
 import { Client } from "../agent";
 import WebSocket from "ws";
+import { generateKeyPairSync } from "crypto";
+import { sign } from "jsonwebtoken";
 
 // jwt.io public key, new tokens can be created in https://jwt.io/
 const idpPublicKey = `-----BEGIN PUBLIC KEY-----
@@ -59,9 +61,9 @@ describe("TunnelServer", () => {
 
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
 
-  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect"): Promise<IncomingSocket> => {
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect", protocols: string[] = []): Promise<IncomingSocket> => {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`http://localhost:${port}/${type}/${endpoint}`, {
+      const ws = new WebSocket(`http://localhost:${port}/${type}/${endpoint}`, protocols, {
         headers
       });
 
@@ -89,7 +91,53 @@ describe("TunnelServer", () => {
   };
 
   describe("websockets", () => {
+    describe.each(["connect", "presence"])("browser client %s", (endpoint) => {
+      it("authenticates without custom headers and never echoes the token", async () => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, false);
+
+        try {
+          // Put the credential first to ensure it cannot be selected by ws's default negotiation.
+          const client = await incomingSocket("client", {}, 10, true, endpoint, [`bored-auth.${jwtToken}`, "bored"]);
+
+          expect(client.connection).toBe("open");
+          expect(client.ws.protocol).toBe("bored");
+        } finally {
+          agent.ws.close();
+        }
+      });
+
+      it.each(["signature", "audience", "expiry"])("rejects a token with invalid %s", async (invalid) => {
+        const keys = generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+        server.idpPublicKey = keys.publicKey.export({ type: "spki", format: "pem" }).toString();
+
+        const token = sign({ sub: "browser-user", clusterId }, keys.privateKey, {
+          algorithm: "RS256",
+          audience: invalid === "audience" ? "wrong-audience" : tunnelAddress,
+          expiresIn: invalid === "expiry" ? -1 : 60
+        });
+        const credential = invalid === "signature" ? jwtToken : token;
+
+        await expect(incomingSocket("client", {}, 10, true, endpoint, ["bored", `bored-auth.${credential}`])).rejects.toBe("4403");
+      });
+
+      it("does not fall back from an invalid Authorization header", async () => {
+        await expect(incomingSocket("client", { Authorization: "Bearer invalid" }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`])).rejects.toBe("4403");
+      });
+
+      it.each([
+        ["bored"],
+        ["bored", `bored-auth.${jwtToken}`, "bored-auth.other"]
+      ])("rejects missing or ambiguous credentials (%s)", async (...protocols) => {
+        await expect(incomingSocket("client", {}, 10, true, endpoint, protocols)).rejects.toBe("4401");
+      });
+    });
+
     describe("agent socket", () => {
+      it("does not accept client subprotocol credentials for agents", async () => {
+        await expect(incomingSocket("agent", {}, 10, true, "connect", ["bored", `bored-auth.${agentJwtToken}`])).rejects.toBe("4401");
+      });
+
       it("accepts agent connection with shared-secret authorization header", async () => {
         server.stop();
         server = new TunnelServer();
