@@ -48,6 +48,28 @@ BoreD is a secure, end-to-end encrypted, reverse tunnel daemon for Kubernetes AP
 }
 ```
 
+## Browser clients
+
+Client WebSockets (`/client/connect` and `/client/presence`) accept the same IdP
+JWT through subprotocols when an Authorization header cannot be set:
+
+```js
+const socket = new WebSocket("wss://bored.domain.com/client/connect", [
+  "bored",
+  `bored-auth.${token}`,
+]);
+```
+
+Offer exactly one `bored-auth.` credential together with `bored`. The server
+negotiates `bored`, never the credential. Omitting `bored` makes the handshake
+fail before an authentication close code can be received; the credential is never
+echoed to make an incomplete protocol offer succeed. Use `wss://` and redact credential
+subprotocols from infrastructure logs, just as for Authorization headers.
+Bearer Authorization headers take precedence, including invalid or malformed
+Bearer credentials (which fail without fallback). Other schemes, such as cached
+HTTP Basic credentials forwarded by an ingress, do not override a subprotocol
+JWT. Agent authentication is unchanged.
+
 ## Encryption
 
 ### Transport Layer Encryption

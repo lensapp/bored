@@ -1,40 +1,46 @@
 import { IncomingMessage } from "http";
 import WebSocket from "ws";
 import { defaultClusterId, TunnelServer } from "../server";
-import { parseAuthorization, verifyClientToken } from "../util";
+import { clientSocketAuthorization, verifyClientToken } from "../util";
 
-export function handleClientSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer) {
-  if (!req.headers.authorization) {
-    console.log("SERVER: client did not specify authorization header, closing connection.");
+function authenticateClient(req: IncomingMessage, socket: WebSocket, server: TunnelServer) {
+  const authorization = clientSocketAuthorization(req);
+
+  if (!authorization) {
+    console.log("SERVER: client did not specify authorization, closing connection.");
     socket.close(4401);
 
     return;
   }
 
-  const authorization = parseAuthorization(req.headers.authorization);
-
-  if (authorization?.type !== "bearer") {
+  if (authorization.type !== "bearer") {
     console.log("SERVER: invalid client token, closing connection.");
-
     socket.close(4403);
 
     return;
   }
 
-  let clusterId: string;
-  let userId: string;
-
   try {
     const tokenData = verifyClientToken(authorization.token, server);
 
-    userId = tokenData.sub;
-    clusterId = server.agentToken === "" ? tokenData.clusterId : defaultClusterId;
+    return {
+      userId: tokenData.sub,
+      clusterId: server.agentToken === "" ? tokenData.clusterId : defaultClusterId
+    };
   } catch (error) {
     console.log("SERVER: client token is not signed by IdP, or token aud invalid, closing connection");
     socket.close(4403);
 
     return;
   }
+}
+
+export function handleClientSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer) {
+  const identity = authenticateClient(req, socket, server);
+
+  if (!identity) return;
+
+  const { clusterId, userId } = identity;
 
   console.log("SERVER: client connected");
   const agents = server.getAgentsForClusterId(clusterId);
@@ -52,35 +58,11 @@ export function handleClientSocket(req: IncomingMessage, socket: WebSocket, serv
 
 export function handleClientPresenceSocket(req: IncomingMessage, socket: WebSocket, server: TunnelServer, firstMessageDelay = 0) {
 
-  if (!req.headers.authorization) {
-    console.log("SERVER: client did not specify authorization header, closing connection.");
-    socket.close(4401);
+  const identity = authenticateClient(req, socket, server);
 
-    return;
-  }
+  if (!identity) return;
 
-  const authorization = parseAuthorization(req.headers.authorization);
-
-  if (authorization?.type !== "bearer") {
-    console.log("SERVER: invalid client token, closing connection.");
-
-    socket.close(4403);
-
-    return;
-  }
-
-  let clusterId: string;
-
-  try {
-    const tokenData = verifyClientToken(authorization.token, server);
-
-    clusterId = server.agentToken === "" ? tokenData.clusterId : defaultClusterId;
-  } catch (error) {
-    console.log("SERVER: client token is not signed by IdP, or token aud invalid, closing connection");
-    socket.close(4403);
-
-    return;
-  }
+  const { clusterId } = identity;
 
   const presenceSockets = server.getPresenceSocketsForClusterId(clusterId);
 

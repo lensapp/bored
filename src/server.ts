@@ -7,6 +7,7 @@ import { handleClientPublicKey } from "./request-handlers/client-public-key";
 import { handleAgentSocket } from "./request-handlers/agent-socket";
 import { handleClientSocket, handleClientPresenceSocket } from "./request-handlers/client-socket";
 import { EventEmitter } from "events";
+import { clientAuthProtocolPrefix } from "./util";
 
 export type ClusterId = string;
 export const defaultClusterId: ClusterId = "default";
@@ -52,7 +53,15 @@ export class TunnelServer extends EventEmitter {
     this.tunnelAddress = tunnelAddress;
 
     this.ws = new Server({
-      noServer: true
+      noServer: true,
+      // Never echo a bearer credential in the handshake response.
+      handleProtocols: (protocols: string[]) => {
+        if (protocols.includes("bored") && protocols.some(protocol => protocol.startsWith(clientAuthProtocolPrefix))) {
+          return "bored";
+        }
+
+        return protocols.find(protocol => !protocol.startsWith(clientAuthProtocolPrefix)) || false;
+      }
     });
 
     this.server = createServer(this.handleRequest.bind(this));

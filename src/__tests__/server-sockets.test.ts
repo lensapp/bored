@@ -1,6 +1,8 @@
 import { TunnelServer } from "../server";
 import { Client } from "../agent";
 import WebSocket from "ws";
+import { generateKeyPairSync } from "crypto";
+import { sign } from "jsonwebtoken";
 
 // jwt.io public key, new tokens can be created in https://jwt.io/
 const idpPublicKey = `-----BEGIN PUBLIC KEY-----
@@ -59,9 +61,9 @@ describe("TunnelServer", () => {
 
   const sleep = (amount: number) => new Promise((resolve) => setTimeout(resolve, amount));
 
-  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect"): Promise<IncomingSocket> => {
+  const incomingSocket = (type = "agent", headers: { [key: string]: string } = {}, keepOpen = 10, close = true, endpoint = "connect", protocols: string[] = []): Promise<IncomingSocket> => {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`http://localhost:${port}/${type}/${endpoint}`, {
+      const ws = new WebSocket(`http://localhost:${port}/${type}/${endpoint}`, protocols, {
         headers
       });
 
@@ -89,7 +91,79 @@ describe("TunnelServer", () => {
   };
 
   describe("websockets", () => {
+    describe.each(["connect", "presence"])("browser client %s", (endpoint) => {
+      it.each([
+        [`bored-auth.${jwtToken}`, "bored"],
+        ["json", "bored", `bored-auth.${jwtToken}`]
+      ])("authenticates without custom headers and negotiates bored (%s)", async (...protocols) => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, false);
+
+        try {
+          // Neither a credential nor an unrelated application protocol may be selected.
+          const client = await incomingSocket("client", {}, 10, true, endpoint, protocols);
+
+          expect(client.connection).toBe("open");
+          expect(client.ws.protocol).toBe("bored");
+        } finally {
+          agent.ws.close();
+        }
+      });
+
+      it.each(["signature", "audience", "expiry"])("rejects a token with invalid %s", async (invalid) => {
+        const keys = generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+        server.idpPublicKey = keys.publicKey.export({ type: "spki", format: "pem" }).toString();
+
+        const token = sign({ sub: "browser-user", clusterId }, keys.privateKey, {
+          algorithm: "RS256",
+          audience: invalid === "audience" ? "wrong-audience" : tunnelAddress,
+          expiresIn: invalid === "expiry" ? -1 : 60
+        });
+        const credential = invalid === "signature" ? jwtToken : token;
+
+        await expect(incomingSocket("client", {}, 10, true, endpoint, ["bored", `bored-auth.${credential}`])).rejects.toBe("4403");
+      });
+
+      it.each(["Bearer invalid", "bEaReR invalid", "Bearer", "Bearer  invalid"])("does not fall back from an invalid Bearer header (%s)", async (header) => {
+        await expect(incomingSocket("client", { Authorization: header }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`])).rejects.toBe("4403");
+      });
+
+      it("accepts subprotocol credentials alongside a cached Basic header", async () => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, false);
+
+        try {
+          const client = await incomingSocket("client", { Authorization: "Basic dXNlcjpwYXNz" }, 10, true, endpoint, ["bored", `bored-auth.${jwtToken}`]);
+
+          expect(client.connection).toBe("open");
+          expect(client.ws.protocol).toBe("bored");
+        } finally {
+          agent.ws.close();
+        }
+      });
+
+      it.each([[], ["bored", "bored-auth.invalid"]])("rejects Basic auth without a valid subprotocol JWT (%s)", async (...protocols) => {
+        await expect(incomingSocket("client", { Authorization: "Basic dXNlcjpwYXNz" }, 10, true, endpoint, protocols)).rejects.toBe("4403");
+      });
+
+      it.each([
+        ["bored"],
+        ["bored", `bored-auth.${jwtToken}`, "bored-auth.other"]
+      ])("rejects missing or ambiguous credentials (%s)", async (...protocols) => {
+        await expect(incomingSocket("client", {}, 10, true, endpoint, protocols)).rejects.toBe("4401");
+      });
+    });
+
     describe("agent socket", () => {
+      it("retains first-protocol negotiation without client credentials", async () => {
+        const agent = await incomingSocket("agent", { Authorization: `Bearer ${agentJwtToken}` }, 10, true, "connect", ["json", "bored"]);
+
+        expect(agent.ws.protocol).toBe("json");
+      });
+
+      it("does not accept client subprotocol credentials for agents", async () => {
+        await expect(incomingSocket("agent", {}, 10, true, "connect", ["bored", `bored-auth.${agentJwtToken}`])).rejects.toBe("4401");
+      });
+
       it("accepts agent connection with shared-secret authorization header", async () => {
         server.stop();
         server = new TunnelServer();
