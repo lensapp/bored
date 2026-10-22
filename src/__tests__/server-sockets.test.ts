@@ -281,7 +281,7 @@ describe("TunnelServer", () => {
           "Authorization": `Bearer ${jwtToken}`
         }, undefined, false);
 
-        expect(callback).toBeCalledTimes(1);
+        expect(callback).toHaveBeenCalledTimes(1);
 
         client.ws.close();
         agent.ws.close();
@@ -305,7 +305,7 @@ describe("TunnelServer", () => {
 
         await sleep(50);
 
-        expect(callback).toBeCalledTimes(1);
+        expect(callback).toHaveBeenCalledTimes(1);
 
         agent.ws.close();
       });
