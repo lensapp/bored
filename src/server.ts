@@ -1,4 +1,4 @@
-import WebSocket, { Server } from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage, ServerResponse, createServer, Server as HttpServer } from "http";
 import { Agent } from "./agent";
 import { Socket } from "net";
@@ -14,7 +14,7 @@ export const defaultClusterId: ClusterId = "default";
 
 export class TunnelServer extends EventEmitter {
   private server?: HttpServer;
-  private ws?: Server;
+  private ws?: WebSocketServer;
 
   public agentToken = "";
   public idpPublicKey = "";
@@ -52,10 +52,12 @@ export class TunnelServer extends EventEmitter {
     this.idpPublicKey = idpPublicKey;
     this.tunnelAddress = tunnelAddress;
 
-    this.ws = new Server({
+    this.ws = new WebSocketServer({
       noServer: true,
       // Never echo a bearer credential in the handshake response.
-      handleProtocols: (protocols: string[]) => {
+      handleProtocols: (offered: Set<string>) => {
+        const protocols = [...offered];
+
         if (protocols.includes("bored") && protocols.some(protocol => protocol.startsWith(clientAuthProtocolPrefix))) {
           return "bored";
         }

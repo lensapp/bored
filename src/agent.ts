@@ -1,4 +1,4 @@
-import WebSocket from "ws";
+import WebSocket, { createWebSocketStream } from "ws";
 import { BoredMplex, BoredMplexClient } from "bored-mplex";
 import { captureException } from "./error-reporter";
 import { TunnelServer } from "./server";
@@ -32,7 +32,7 @@ export class Agent {
     this.server = server;
     this.clusterId = clusterId;
 
-    const stream = WebSocket.createWebSocketStream(this.socket);
+    const stream = createWebSocketStream(this.socket);
 
     this.mplex = new BoredMplexClient();
 
@@ -72,7 +72,7 @@ export class Agent {
       agentStream.on("finish", () => stream.end());
     });
 
-    const duplex = WebSocket.createWebSocketStream(socket);
+    const duplex = createWebSocketStream(socket);
 
     duplex.pipe(mplex).pipe(duplex);
 
