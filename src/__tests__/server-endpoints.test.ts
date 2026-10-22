@@ -1,5 +1,4 @@
 import { TunnelServer } from "../server";
-import got, { Headers } from "got";
 import { Agent } from "../agent";
 
 // jwt.io public key, new tokens can be created in https://jwt.io/
@@ -42,7 +41,11 @@ describe("TunnelServer", () => {
     server?.stop();
   });
 
-  const get = async (path: string, headers?: Headers) => got(`http://localhost:${port}${path}`, { throwHttpErrors: false, headers });
+  const get = async (path: string, headers?: Record<string, string>) => {
+    const res = await fetch(`http://localhost:${port}${path}`, { headers });
+
+    return { statusCode: res.status, body: await res.text() };
+  };
 
   describe("http endpoints", () => {
     it("responds 200 on /", async () => {
